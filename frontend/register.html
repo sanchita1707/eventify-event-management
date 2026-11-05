@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account – EVENTIFY Smart Event Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <section class="ev-auth-wrapper">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-11">
+          <div class="ev-auth-split-card">
+            <div class="row g-0">
+              <!-- Left Visual Showcase Pane -->
+              <div class="col-lg-5 d-none d-lg-flex">
+                <div class="ev-auth-visual w-100">
+                  <div>
+                    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background:rgba(255,255,255,0.14);font-size:0.8rem;font-weight:600;">
+                      <i class="fa-solid fa-bolt text-warning"></i>
+                      <span>Join EVENTIFY Today</span>
+                    </div>
+                    <h2 class="text-white fw-bold mb-2">Your Gateway to Smart Live Events</h2>
+                    <p class="text-light opacity-75 small mb-0">
+                      Whether you are booking front-row VIP seats or organizing a 1,000-seat tech conference, EVENTIFY gives you powerful real-time tools.
+                    </p>
+                    <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=900&q=80" alt="EVENTIFY Concerts & Conferences" class="ev-auth-visual-img">
+                    <div class="mt-2">
+                      <div class="ev-auth-feature-item">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span><strong>Customers:</strong> Interactive seat maps, QR tickets & PDF certificates</span>
+                      </div>
+                      <div class="ev-auth-feature-item">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span><strong>Organizers:</strong> Live revenue analytics, seat tiers & QR gate scanner</span>
+                      </div>
+                      <div class="ev-auth-feature-item mb-0">
+                        <i class="fa-solid fa-lock"></i>
+                        <span><strong>Security:</strong> bcryptjs password encryption & role verification</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pt-3 border-top border-white border-opacity-10 small text-light opacity-75">
+                    Already registered? <a href="/login.html" class="text-warning fw-bold text-decoration-underline ms-1">Sign in here</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Registration Form Pane -->
+              <div class="col-lg-7">
+                <div class="ev-auth-form-pane">
+                  <div class="mb-4">
+                    <h3 class="fw-bold mb-1">Create Your EVENTIFY Account</h3>
+                    <p class="text-muted small mb-0">Select your account type and complete the form below</p>
+                  </div>
+
+                  <div id="registerAlertBox" class="d-none mb-3"></div>
+
+                  <form id="registerForm" novalidate>
+                    <!-- Account Type Selector (Customer or Organizer ONLY; Admin public signup prevented) -->
+                    <label class="form-label small fw-semibold">Select Account Type *</label>
+                    <div class="row g-2 mb-3">
+                      <div class="col-6">
+                        <input type="radio" class="btn-check" name="regRole" id="roleCustomer" value="customer" checked>
+                        <label class="btn btn-ev-lavender w-100 py-2" for="roleCustomer">
+                          <i class="fa-solid fa-ticket me-1"></i> Customer
+                        </label>
+                      </div>
+                      <div class="col-6">
+                        <input type="radio" class="btn-check" name="regRole" id="roleOrganizer" value="organizer">
+                        <label class="btn btn-ev-lavender w-100 py-2" for="roleOrganizer">
+                          <i class="fa-solid fa-bullhorn me-1"></i> Event Organizer
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="regName" class="form-label small fw-semibold">Full Name *</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light"><i class="fa-regular fa-user text-primary"></i></span>
+                          <input type="text" id="regName" class="form-control" placeholder="Aarav Sharma" required>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label for="regEmail" class="form-label small fw-semibold">Email Address *</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light"><i class="fa-regular fa-envelope text-primary"></i></span>
+                          <input type="email" id="regEmail" class="form-control" placeholder="aarav@example.com" required>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label for="regPhone" class="form-label small fw-semibold">Mobile Number *</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light"><i class="fa-solid fa-phone text-primary"></i></span>
+                          <input type="tel" id="regPhone" class="form-control" placeholder="+91 98765 43210" required>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label for="regCity" class="form-label small fw-semibold">City</label>
+                        <select id="regCity" class="form-select">
+                          <option value="Mumbai">Mumbai</option>
+                          <option value="Bengaluru">Bengaluru</option>
+                          <option value="Pune">Pune</option>
+                          <option value="Delhi">Delhi</option>
+                          <option value="Hyderabad">Hyderabad</option>
+                        </select>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label for="regPassword" class="form-label small fw-semibold">Password *</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-primary"></i></span>
+                          <input type="password" id="regPassword" class="form-control border-end-0" minlength="6" placeholder="Min 6 characters" required>
+                          <button type="button" class="input-group-text ev-password-toggle" onclick="togglePwdField('regPassword', this)">
+                            <i class="fa-regular fa-eye"></i>
+                          </button>
+                        </div>
+                        <div class="ev-strength-bar-wrap">
+                          <div id="pwdStrengthBar" class="ev-strength-bar"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                          <span id="pwdStrengthText" class="text-muted" style="font-size:0.72rem;">Password strength</span>
+                          <span class="text-muted" style="font-size:0.72rem;">Use letters, numbers & symbols</span>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label for="regConfirmPassword" class="form-label small fw-semibold">Confirm Password *</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light"><i class="fa-solid fa-check-double text-primary"></i></span>
+                          <input type="password" id="regConfirmPassword" class="form-control border-end-0" minlength="6" placeholder="Re-enter password" required>
+                          <button type="button" class="input-group-text ev-password-toggle" onclick="togglePwdField('regConfirmPassword', this)">
+                            <i class="fa-regular fa-eye"></i>
+                          </button>
+                        </div>
+                        <div id="pwdMatchFeedback" class="small mt-1" style="font-size:0.74rem;"></div>
+                      </div>
+
+                      <div class="col-12">
+                        <label for="regInterests" class="form-label small fw-semibold">Favorite Event Interests (Optional)</label>
+                        <input type="text" id="regInterests" class="form-control" placeholder="Technology & AI, Music & Concerts, Workshops & Bootcamp">
+                      </div>
+
+                      <!-- Conditional Organizer Fields -->
+                      <div id="organizerExtraFields" class="col-12 d-none">
+                        <div class="p-3 rounded-3 border" style="background:var(--ev-lavender);">
+                          <h6 class="fw-bold small text-primary mb-2"><i class="fa-solid fa-building me-1"></i>Organization Profile</h6>
+                          <div class="row g-2">
+                            <div class="col-md-6">
+                              <label class="form-label small mb-1">Organization / Brand Name *</label>
+                              <input type="text" id="regOrgName" class="form-control form-control-sm" placeholder="e.g. Apex Live Productions">
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label small mb-1">About Your Organization</label>
+                              <input type="text" id="regOrgDesc" class="form-control form-control-sm" placeholder="Conferences, concerts, college fests...">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-12">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="regTermsCheck" required>
+                          <label class="form-check-label small text-secondary" for="regTermsCheck">
+                            I accept the EVENTIFY <a href="/contact.html" class="fw-semibold">Terms & Conditions</a> and <a href="/contact.html" class="fw-semibold">Privacy Policy</a> *
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="col-12 mt-3">
+                        <button type="submit" id="regSubmitBtn" class="btn-ev-primary w-100 py-2">
+                          <span>Create My Account</span>
+                          <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="text-center small text-muted pt-3 mt-3 border-top">
+                    Already have an account? <a href="/login.html" class="fw-bold">Sign In</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('role') === 'organizer') {
+      document.getElementById('roleOrganizer').checked = true;
+      document.getElementById('organizerExtraFields').classList.remove('d-none');
+    }
+
+    document.querySelectorAll('input[name="regRole"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const extra = document.getElementById('organizerExtraFields');
+        if (e.target.value === 'organizer') {
+          extra.classList.remove('d-none');
+        } else {
+          extra.classList.add('d-none');
+        }
+      });
+    });
+
+    function togglePwdField(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash text-primary';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+
+    // Password Strength Indicator & Confirm Matching
+    const pwdInput = document.getElementById('regPassword');
+    const confirmInput = document.getElementById('regConfirmPassword');
+    const strengthBar = document.getElementById('pwdStrengthBar');
+    const strengthText = document.getElementById('pwdStrengthText');
+    const matchFeedback = document.getElementById('pwdMatchFeedback');
+
+    function evaluatePasswordStrength(val) {
+      let score = 0;
+      if (val.length >= 6) score += 25;
+      if (val.length >= 10) score += 25;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 25;
+      if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score += 25;
+
+      strengthBar.style.width = `${score}%`;
+      if (score <= 25) {
+        strengthBar.style.backgroundColor = '#EF4444';
+        strengthText.textContent = 'Weak password';
+        strengthText.className = 'text-danger';
+      } else if (score <= 50) {
+        strengthBar.style.backgroundColor = '#F59E0B';
+        strengthText.textContent = 'Fair password';
+        strengthText.className = 'text-warning';
+      } else if (score <= 75) {
+        strengthBar.style.backgroundColor = '#2563EB';
+        strengthText.textContent = 'Good password';
+        strengthText.className = 'text-primary';
+      } else {
+        strengthBar.style.backgroundColor = '#10B981';
+        strengthText.textContent = 'Strong password';
+        strengthText.className = 'text-success fw-semibold';
+      }
+    }
+
+    function checkPasswordsMatch() {
+      const p1 = pwdInput.value;
+      const p2 = confirmInput.value;
+      if (!p2) {
+        matchFeedback.textContent = '';
+        return;
+      }
+      if (p1 === p2) {
+        matchFeedback.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>Passwords match`;
+        matchFeedback.className = 'small mt-1 text-success fw-semibold';
+      } else {
+        matchFeedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger me-1"></i>Passwords do not match`;
+        matchFeedback.className = 'small mt-1 text-danger';
+      }
+    }
+
+    pwdInput.addEventListener('input', () => {
+      evaluatePasswordStrength(pwdInput.value);
+      checkPasswordsMatch();
+    });
+    confirmInput.addEventListener('input', checkPasswordsMatch);
+
+    function showRegisterAlert(message, type = 'danger') {
+      const box = document.getElementById('registerAlertBox');
+      box.className = `alert alert-${type} small py-2 px-3 mb-3 d-flex align-items-center gap-2`;
+      box.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i><span>${message}</span>`;
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const password = pwdInput.value;
+      const confirmPassword = confirmInput.value;
+      const termsChecked = document.getElementById('regTermsCheck').checked;
+      const role = document.querySelector('input[name="regRole"]:checked').value;
+
+      if (!name || !email || !phone || !password || !confirmPassword) {
+        showRegisterAlert('Please fill in all required fields.');
+        EventifyApp.showToast('Please fill in all required fields', 'warning');
+        return;
+      }
+
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        showRegisterAlert('Please provide a valid email address.');
+        EventifyApp.showToast('Invalid email address', 'warning');
+        return;
+      }
+
+      if (password.length < 6) {
+        showRegisterAlert('Password must be at least 6 characters long.');
+        EventifyApp.showToast('Password must be at least 6 characters', 'warning');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showRegisterAlert('Password and Confirm Password do not match.');
+        EventifyApp.showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      if (!termsChecked) {
+        showRegisterAlert('Please accept the Terms and Conditions to continue.');
+        EventifyApp.showToast('Please accept the Terms and Conditions', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('regSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Creating Account...`;
+
+      try {
+        const interests = document.getElementById('regInterests').value
+          .split(',')
+          .map(i => i.trim())
+          .filter(Boolean);
+
+        const res = await EventifyApp.api('/auth/register', {
+          method: 'POST',
+          body: {
+            name,
+            email,
+            password,
+            phone,
+            city: document.getElementById('regCity').value,
+            role,
+            interests,
+            organizationName: document.getElementById('regOrgName').value,
+            organizationDescription: document.getElementById('regOrgDesc').value
+          }
+        });
+
+        EventifyApp.setSession(res.token, res.user);
+        localStorage.setItem('ev_remember_email', email);
+        showRegisterAlert('Registration successful! Redirecting to login page...', 'success');
+        EventifyApp.showToast('Registration completed! Redirecting to Login...', 'success');
+
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 700);
+      } catch (err) {
+        showRegisterAlert(err.message, 'danger');
+        EventifyApp.showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<span>Create My Account</span><i class="fa-solid fa-arrow-right ms-1"></i>`;
+      }
+    });
+  </script>
+</body>
+</html>

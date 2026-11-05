@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings & Smart Tickets – EVENTIFY</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <section class="py-4 bg-white border-bottom">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center">
+      <div>
+        <span class="text-primary fw-bold small text-uppercase">Customer Portal</span>
+        <h2 class="mb-0">My Bookings, QR Tickets & Certificates</h2>
+      </div>
+      <a href="/events.html" class="btn-ev-primary btn-sm"><i class="fa-solid fa-plus me-1"></i> Book Another Event</a>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <!-- Search & Filter Bar -->
+      <div class="ev-card p-3 mb-4 h-auto">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-8">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-primary"></i></span>
+              <input type="text" id="myBookingSearch" class="form-control border-start-0" placeholder="Search by event name, booking reference, or ticket code...">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select id="myBookingStatusFilter" class="form-select form-select-sm">
+              <option value="all">All Booking Statuses</option>
+              <option value="confirmed">Confirmed Tickets</option>
+              <option value="pending">Pending Payment</option>
+              <option value="cancelled">Cancelled / Failed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="myBookingsList" class="d-flex flex-column gap-4">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Details Modal -->
+  <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius:18px;">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-receipt text-primary me-2"></i>Complete Booking Breakdown</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="bookingDetailModalBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    EventifyApp.requireAuth();
+    let myBookingsCache = [];
+
+    async function loadMyBookings() {
+      const container = document.getElementById('myBookingsList');
+      try {
+        const res = await EventifyApp.api('/bookings/my-bookings');
+        myBookingsCache = res.bookings || [];
+        renderMyBookings();
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+      }
+    }
+
+    function renderMyBookings() {
+      const container = document.getElementById('myBookingsList');
+      const q = (document.getElementById('myBookingSearch').value || '').trim().toLowerCase();
+      const st = document.getElementById('myBookingStatusFilter').value;
+
+      if (myBookingsCache.length === 0) {
+        container.innerHTML = `
+          <div class="ev-card p-5 text-center">
+            <i class="fa-solid fa-ticket fs-1 text-primary mb-3"></i>
+            <h4>No Bookings Yet</h4>
+            <p class="text-muted small mb-4">You haven't booked any events yet. Explore upcoming concerts, tech summits, and workshops!</p>
+            <div><a href="/events.html" class="btn-ev-primary">Explore Events</a></div>
+          </div>
+        `;
+        return;
+      }
+
+      const filtered = myBookingsCache.filter(b => {
+        const ev = b.event || {};
+        const t = b.ticketId || {};
+        const matchQ = !q ||
+          (ev.title && ev.title.toLowerCase().includes(q)) ||
+          (b.bookingReference && b.bookingReference.toLowerCase().includes(q)) ||
+          (t.ticketCode && t.ticketCode.toLowerCase().includes(q));
+        const matchSt = st === 'all' || b.bookingStatus === st;
+        return matchQ && matchSt;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="ev-card p-4 text-center text-muted">No bookings match your search filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(b => {
+        const ev = b.event || {};
+        const ticket = b.ticketId;
+        const seats = (b.selectedSeats || []).map(s => s.seatNumber).join(', ');
+        const isConfirmed = b.bookingStatus === 'confirmed';
+
+        return `
+          <div class="ev-card p-4 h-auto">
+            <div class="row g-4 align-items-center">
+              <div class="col-md-3">
+                <img src="${ev.poster || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80'}"
+                  class="w-100 rounded-3" style="height:155px;object-fit:cover;" alt="${ev.title || 'Event'}">
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="ev-badge ${isConfirmed ? 'ev-badge-green' : 'ev-badge-amber'}">
+                    <i class="fa-solid ${isConfirmed ? 'fa-circle-check' : 'fa-clock'}"></i>
+                    ${b.bookingStatus.toUpperCase()}
+                  </span>
+                  <span class="ev-badge ev-badge-purple">Ref: ${b.bookingReference}</span>
+                  ${ticket ? `<span class="ev-badge ev-badge-blue"><i class="fa-solid fa-qrcode"></i> ${ticket.ticketCode} (${ticket.checkInStatus === 'checked_in' ? 'Checked In' : 'Unused'})</span>` : ''}
+                </div>
+                <h5 class="fw-bold mb-1"><a href="/event-details.html?id=${ev._id}" class="text-dark">${ev.title || 'Event'}</a></h5>
+                <p class="text-muted small mb-2">
+                  <i class="fa-regular fa-calendar me-1 text-primary"></i>${EventifyApp.formatDate(ev.date)} at ${ev.startTime || '18:00'} &nbsp;|&nbsp;
+                  <i class="fa-solid fa-location-dot me-1 text-primary"></i>${ev.venue || ''}, ${ev.city || ''}
+                </p>
+                <div class="small text-secondary">
+                  <strong>Seats (${b.quantity}):</strong> <span class="text-primary fw-bold">${seats}</span> &nbsp;|&nbsp;
+                  <strong>Total Paid:</strong> <span class="fw-bold text-dark">${EventifyApp.formatCurrency(b.totalAmount)}</span>
+                </div>
+              </div>
+              <div class="col-md-3 text-md-end d-flex flex-column gap-2">
+                <button onclick="viewBookingDetailsModal('${b._id}')" class="btn btn-sm btn-outline-secondary py-2">
+                  <i class="fa-solid fa-file-invoice me-1"></i> View Booking Details
+                </button>
+                ${isConfirmed && ticket ? `
+                  <a href="/ticket.html?id=${ticket._id}" class="btn-ev-primary btn-sm py-2">
+                    <i class="fa-solid fa-qrcode me-1"></i> View & Download QR Ticket
+                  </a>
+                ` : ''}
+                ${!isConfirmed && b.bookingStatus === 'pending' ? `
+                  <a href="/payment.html?bookingId=${b._id}" class="btn-ev-primary btn-sm py-2">
+                    <i class="fa-solid fa-credit-card me-1"></i> Complete Payment
+                  </a>
+                ` : ''}
+                ${isConfirmed && ev.certificateEligible ? `
+                  <button onclick="downloadCert('${b._id}')" class="btn-ev-lavender btn-sm py-2">
+                    <i class="fa-solid fa-award me-1"></i> Download Certificate PDF
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function viewBookingDetailsModal(bookingId) {
+      const b = myBookingsCache.find(x => x._id === bookingId);
+      if (!b) return;
+      const ev = b.event || {};
+      const t = b.ticketId || {};
+      const p = b.paymentId || {};
+
+      document.getElementById('bookingDetailModalBody').innerHTML = `
+        <div class="p-3 rounded-3 mb-3" style="background:var(--ev-lavender);">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-muted">Booking Reference</span>
+            <span class="fw-bold text-primary">${b.bookingReference}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Smart Ticket ID</span>
+            <code class="fw-bold">${t.ticketCode || 'Pending Payment'}</code>
+          </div>
+        </div>
+        <h6 class="fw-bold mb-1">${ev.title || 'Event'}</h6>
+        <p class="text-muted small mb-3">${EventifyApp.formatDate(ev.date)} • ${ev.venue || ''}, ${ev.city || ''}</p>
+        <div class="border-top pt-2 mb-3 small">
+          <div class="fw-semibold mb-1">Selected Seats (${b.quantity}):</div>
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            ${(b.selectedSeats || []).map(s => `<span class="ev-badge ev-badge-purple">${s.seatNumber} (${s.tier} • ${EventifyApp.formatCurrency(s.price)})</span>`).join('')}
+          </div>
+          <div class="d-flex justify-content-between py-1"><span>Subtotal:</span><span>${EventifyApp.formatCurrency(b.subTotal || b.totalAmount)}</span></div>
+          <div class="d-flex justify-content-between py-1"><span>GST & Platform Fee (5%):</span><span>${EventifyApp.formatCurrency(b.taxAmount || 0)}</span></div>
+          <div class="d-flex justify-content-between py-1 border-top fw-bold text-dark"><span>Total Paid:</span><span class="text-success">${EventifyApp.formatCurrency(b.totalAmount)}</span></div>
+        </div>
+        <div class="small text-secondary border-top pt-2">
+          <div><strong>Attendee:</strong> ${b.attendeeName} (${b.attendeeEmail})</div>
+          <div><strong>Payment Status:</strong> ${b.paymentStatus.toUpperCase()} ${p.razorpayPaymentId ? `(${p.razorpayPaymentId})` : ''}</div>
+          <div><strong>Ticket Check-In Status:</strong> ${(t.checkInStatus || 'unused').toUpperCase()}</div>
+        </div>
+      `;
+      new bootstrap.Modal(document.getElementById('bookingDetailModal')).show();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMyBookings();
+      document.getElementById('myBookingSearch').addEventListener('input', renderMyBookings);
+      document.getElementById('myBookingStatusFilter').addEventListener('change', renderMyBookings);
+    });
+
+    async function downloadCert(bookingId) {
+      try {
+        EventifyApp.showToast('Generating PDF Certificate...', 'info');
+        const blob = await EventifyApp.api(`/certificates/download/${bookingId}`);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `EVENTIFY-Certificate-${bookingId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        EventifyApp.showToast('Certificate downloaded successfully!', 'success');
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
+

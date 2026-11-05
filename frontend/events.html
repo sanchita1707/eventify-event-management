@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore Events – EVENTIFY Smart Event Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <!-- Page Header -->
+  <section class="py-4 bg-white border-bottom">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Discover & Book</span>
+          <h2 class="mb-0">Explore Live Events</h2>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small" id="resultsCountLabel">Showing events...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content & Filters -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3">
+          <div class="ev-card p-4 h-auto sticky-top" style="top:90px;">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h6 class="mb-0 fw-bold"><i class="fa-solid fa-sliders me-2 text-primary"></i>Filter Events</h6>
+              <button type="button" id="resetFiltersBtn" class="btn btn-link btn-sm p-0 text-decoration-none">Reset</button>
+            </div>
+
+            <form id="filterForm">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Search Keyword</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-primary"></i></span>
+                  <input type="text" id="filterSearch" class="form-control border-start-0" placeholder="Title, venue, tag...">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Category</label>
+                <select id="filterCategory" class="form-select">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">City</label>
+                <select id="filterCity" class="form-select">
+                  <option value="all">All Cities</option>
+                  <option value="Mumbai">Mumbai</option>
+                  <option value="Bengaluru">Bengaluru</option>
+                  <option value="Pune">Pune</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Hyderabad">Hyderabad</option>
+                  <option value="Chennai">Chennai</option>
+                  <option value="Kolkata">Kolkata</option>
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">From Date</label>
+                  <input type="date" id="filterDateFrom" class="form-control form-control-sm">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">To Date</label>
+                  <input type="date" id="filterDateTo" class="form-control form-control-sm">
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Min Price (₹)</label>
+                  <input type="number" id="filterMinPrice" class="form-control" placeholder="0" min="0">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Max Price (₹)</label>
+                  <input type="number" id="filterMaxPrice" class="form-control" placeholder="5000" min="0">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Sort By</label>
+                <select id="filterSort" class="form-select">
+                  <option value="date">Date: Upcoming First</option>
+                  <option value="popular">Popularity & Bookings</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                </select>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="filterFeatured">
+                <label class="form-check-label small" for="filterFeatured">Featured Events Only</label>
+              </div>
+
+              <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="filterTrending">
+                <label class="form-check-label small" for="filterTrending">Trending Events Only</label>
+              </div>
+
+              <button type="submit" class="btn-ev-primary w-100">
+                <i class="fa-solid fa-filter me-1"></i> Apply Filters
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Events Grid & Pagination -->
+        <div class="col-lg-9">
+          <!-- Quick Filter Pills -->
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-ev-lavender" onclick="quickToggleFlag('all')">
+                <i class="fa-solid fa-layer-group me-1"></i> All Approved Events
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="quickToggleFlag('featured')">
+                <i class="fa-solid fa-star text-warning me-1"></i> Featured
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="quickToggleFlag('trending')">
+                <i class="fa-solid fa-fire text-danger me-1"></i> Trending
+              </button>
+            </div>
+            <div class="text-muted small" id="paginationSummaryLabel"></div>
+          </div>
+
+          <div class="row g-4" id="eventsListGrid">
+            <div class="col-12 text-center py-5 text-muted">Loading events...</div>
+          </div>
+
+          <!-- Pagination Controls -->
+          <nav aria-label="Events pagination" class="mt-4 d-flex justify-content-center" id="eventsPaginationNav"></nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    let wishlistIds = [];
+    let currentPage = 1;
+    const PAGE_LIMIT = 9;
+
+    async function loadCategoriesDropdown() {
+      const res = await EventifyApp.api('/categories');
+      const select = document.getElementById('filterCategory');
+      (res.categories || []).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = `${c.name} (${c.eventCount || 0})`;
+        select.appendChild(opt);
+      });
+    }
+
+    window.quickToggleFlag = function(mode) {
+      if (mode === 'all') {
+        document.getElementById('filterFeatured').checked = false;
+        document.getElementById('filterTrending').checked = false;
+      } else if (mode === 'featured') {
+        document.getElementById('filterFeatured').checked = true;
+        document.getElementById('filterTrending').checked = false;
+      } else if (mode === 'trending') {
+        document.getElementById('filterTrending').checked = true;
+        document.getElementById('filterFeatured').checked = false;
+      }
+      currentPage = 1;
+      fetchFilteredEvents(1);
+    };
+
+    async function fetchFilteredEvents(page = 1) {
+      currentPage = page;
+      const grid = document.getElementById('eventsListGrid');
+      const countLabel = document.getElementById('resultsCountLabel');
+      const pageLabel = document.getElementById('paginationSummaryLabel');
+      const paginationNav = document.getElementById('eventsPaginationNav');
+      grid.innerHTML = `<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div></div>`;
+
+      try {
+        const params = new URLSearchParams();
+        const search = document.getElementById('filterSearch').value.trim();
+        const category = document.getElementById('filterCategory').value;
+        const city = document.getElementById('filterCity').value;
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+        const minPrice = document.getElementById('filterMinPrice').value;
+        const maxPrice = document.getElementById('filterMaxPrice').value;
+        const sort = document.getElementById('filterSort').value;
+        const featured = document.getElementById('filterFeatured').checked;
+        const trending = document.getElementById('filterTrending').checked;
+
+        if (search) params.set('search', search);
+        if (category && category !== 'all') params.set('category', category);
+        if (city && city !== 'all') params.set('city', city);
+        if (dateFrom) params.set('dateFrom', dateFrom);
+        if (dateTo) params.set('dateTo', dateTo);
+        if (minPrice !== '') params.set('minPrice', minPrice);
+        if (maxPrice !== '') params.set('maxPrice', maxPrice);
+        if (sort) params.set('sort', sort);
+        if (featured) params.set('featured', 'true');
+        if (trending) params.set('trending', 'true');
+        params.set('page', String(currentPage));
+        params.set('limit', String(PAGE_LIMIT));
+
+        const res = await EventifyApp.api(`/events?${params.toString()}`);
+        const events = res.events || [];
+        const total = res.total || events.length;
+        const pages = res.pages || 1;
+
+        countLabel.textContent = `Found ${total} matching event${total === 1 ? '' : 's'}`;
+        pageLabel.textContent = pages > 1 ? `Page ${currentPage} of ${pages}` : '';
+
+        if (events.length === 0) {
+          grid.innerHTML = `
+            <div class="col-12">
+              <div class="ev-card p-5 text-center">
+                <i class="fa-regular fa-calendar-xmark fs-1 text-primary mb-3"></i>
+                <h5>No Events Match Your Filters</h5>
+                <p class="text-muted small mb-3">Try clearing your search keyword or adjusting date, price, and city filters.</p>
+                <div><button class="btn-ev-outline btn-sm" onclick="document.getElementById('resetFiltersBtn').click()">Reset All Filters</button></div>
+              </div>
+            </div>
+          `;
+          paginationNav.innerHTML = '';
+          return;
+        }
+
+        grid.innerHTML = events.map(e => EventifyApp.renderEventCard(e, wishlistIds)).join('');
+
+        // Render pagination
+        if (pages > 1) {
+          let pageItems = '';
+          pageItems += `
+            <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+              <button class="page-link" onclick="fetchFilteredEvents(${currentPage - 1})">Previous</button>
+            </li>
+          `;
+          for (let p = 1; p <= pages; p++) {
+            pageItems += `
+              <li class="page-item ${p === currentPage ? 'active' : ''}">
+                <button class="page-link" onclick="fetchFilteredEvents(${p})">${p}</button>
+              </li>
+            `;
+          }
+          pageItems += `
+            <li class="page-item ${currentPage >= pages ? 'disabled' : ''}">
+              <button class="page-link" onclick="fetchFilteredEvents(${currentPage + 1})">Next</button>
+            </li>
+          `;
+          paginationNav.innerHTML = `<ul class="pagination pagination-sm mb-0">${pageItems}</ul>`;
+        } else {
+          paginationNav.innerHTML = '';
+        }
+      } catch (err) {
+        grid.innerHTML = `<div class="col-12 text-danger text-center py-4">${err.message}</div>`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (EventifyApp.getUser()) {
+        try {
+          const w = await EventifyApp.api('/wishlist');
+          wishlistIds = (w.wishlist || []).filter(i => i.event).map(i => i.event._id);
+        } catch (e) {}
+      }
+
+      await loadCategoriesDropdown();
+
+      // Hydrate filters from URL query string
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('search')) document.getElementById('filterSearch').value = urlParams.get('search');
+      if (urlParams.get('category')) document.getElementById('filterCategory').value = urlParams.get('category');
+      if (urlParams.get('city')) document.getElementById('filterCity').value = urlParams.get('city');
+      if (urlParams.get('featured') === 'true') document.getElementById('filterFeatured').checked = true;
+      if (urlParams.get('trending') === 'true') document.getElementById('filterTrending').checked = true;
+
+      fetchFilteredEvents(1);
+
+      document.getElementById('filterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetchFilteredEvents(1);
+      });
+
+      ['filterCategory', 'filterCity', 'filterSort', 'filterFeatured', 'filterTrending', 'filterDateFrom', 'filterDateTo'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => fetchFilteredEvents(1));
+      });
+
+      document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+        document.getElementById('filterForm').reset();
+        window.history.replaceState({}, '', '/events.html');
+        fetchFilteredEvents(1);
+      });
+    });
+  </script>
+</body>
+</html>
+

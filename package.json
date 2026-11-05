@@ -1,0 +1,40 @@
+{
+  "name": "eventify-event-management",
+  "version": "1.0.0",
+  "description": "EVENTIFY - Smart Event Management and Online Booking System",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "seed": "node backend/utils/seeder.js",
+    "test": "node backend/utils/test-api.js"
+  },
+  "keywords": [
+    "event-management",
+    "booking-system",
+    "qr-tickets",
+    "nodejs",
+    "express",
+    "mongodb",
+    "bootstrap5"
+  ],
+  "author": "EVENTIFY Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
+    "pdfkit": "^0.15.0",
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.4",
+    "socket.io": "^4.8.1"
+  }
+}
+

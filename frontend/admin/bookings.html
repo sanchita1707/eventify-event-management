@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage All Bookings – EVENTIFY Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <aside class="ev-sidebar" id="ev-admin-sidebar"></aside>
+
+    <main class="ev-dashboard-main">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+          <span class="text-danger fw-bold small text-uppercase">Platform Reservations & Transactions</span>
+          <h3 class="mb-0">Monitor All Ticket Bookings</h3>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="ev-card p-3 mb-4 h-auto">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-5">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-primary"></i></span>
+              <input type="text" id="adminBookingSearch" class="form-control border-start-0" placeholder="Search booking ref, customer name, email, or ticket ID...">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select id="adminBookingEventSelect" class="form-select form-select-sm">
+              <option value="all">All Events</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select id="adminBookingStatusSelect" class="form-select form-select-sm">
+              <option value="all">All Booking Statuses</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ev-card p-4 h-auto">
+        <div class="table-responsive">
+          <table class="table align-middle small mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Booking Ref</th>
+                <th>Ticket ID</th>
+                <th>Customer</th>
+                <th>Event</th>
+                <th>Qty & Seats</th>
+                <th>Total Amount</th>
+                <th>Booking & Payment</th>
+                <th>Check-In</th>
+              </tr>
+            </thead>
+            <tbody id="adminBookingsTable">
+              <tr><td colspan="8" class="text-center py-4 text-muted">Loading bookings...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    let allAdminBookings = [];
+
+    function renderAdminBookings() {
+      const tbody = document.getElementById('adminBookingsTable');
+      const q = (document.getElementById('adminBookingSearch').value || '').trim().toLowerCase();
+      const evFilter = document.getElementById('adminBookingEventSelect').value;
+      const stFilter = document.getElementById('adminBookingStatusSelect').value;
+
+      const filtered = allAdminBookings.filter(b => {
+        const t = b.ticketId || {};
+        const matchQ = !q ||
+          (b.bookingReference && b.bookingReference.toLowerCase().includes(q)) ||
+          (b.attendeeName && b.attendeeName.toLowerCase().includes(q)) ||
+          (b.attendeeEmail && b.attendeeEmail.toLowerCase().includes(q)) ||
+          (t.ticketCode && t.ticketCode.toLowerCase().includes(q));
+        const matchEv = evFilter === 'all' || (b.event && b.event._id === evFilter);
+        const matchSt = stFilter === 'all' || b.bookingStatus === stFilter;
+        return matchQ && matchEv && matchSt;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No matching bookings found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const seats = (b.selectedSeats || []).map(s => s.seatNumber).join(', ');
+        const t = b.ticketId;
+        return `
+          <tr>
+            <td class="fw-bold text-primary">${b.bookingReference}</td>
+            <td><code>${t ? t.ticketCode : '—'}</code></td>
+            <td>
+              <div class="fw-semibold text-dark">${b.attendeeName}</div>
+              <div class="text-muted" style="font-size:0.72rem;">${b.attendeeEmail}</div>
+            </td>
+            <td>${b.event ? b.event.title : ''}</td>
+            <td><span class="fw-bold me-1">${b.quantity}x</span><span class="ev-badge ev-badge-purple">${seats}</span></td>
+            <td class="fw-bold text-success">${EventifyApp.formatCurrency(b.totalAmount)}</td>
+            <td>
+              <span class="ev-badge ${b.bookingStatus === 'confirmed' ? 'ev-badge-green' : 'ev-badge-amber'}">
+                ${b.bookingStatus.toUpperCase()}
+              </span>
+            </td>
+            <td>
+              <span class="ev-badge ${t && t.checkInStatus === 'checked_in' ? 'ev-badge-green' : 'ev-badge-blue'}">
+                ${t ? t.checkInStatus.toUpperCase() : 'N/A'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await EventifyApp.api('/admin/bookings');
+        allAdminBookings = res.bookings || [];
+
+        const evMap = {};
+        allAdminBookings.forEach(b => {
+          if (b.event && b.event._id) evMap[b.event._id] = b.event.title;
+        });
+        const evSelect = document.getElementById('adminBookingEventSelect');
+        Object.keys(evMap).forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = evMap[id];
+          evSelect.appendChild(opt);
+        });
+
+        renderAdminBookings();
+        document.getElementById('adminBookingSearch').addEventListener('input', renderAdminBookings);
+        document.getElementById('adminBookingEventSelect').addEventListener('change', renderAdminBookings);
+        document.getElementById('adminBookingStatusSelect').addEventListener('change', renderAdminBookings);
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
+

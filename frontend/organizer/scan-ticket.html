@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart QR Ticket Scanner – EVENTIFY Organizer Studio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <aside class="ev-sidebar" id="ev-organizer-sidebar"></aside>
+
+    <main class="ev-dashboard-main">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Anti-Duplicate Access Control</span>
+          <h3 class="mb-0">Smart QR Ticket Scanner & Validator</h3>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Left: Camera / QR Image Upload / Manual Ticket Code Validator -->
+        <div class="col-lg-6">
+          <div class="ev-card p-4 h-auto mb-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-qrcode text-primary me-2"></i>Verify Ticket ID or Scan QR Payload</h5>
+            <p class="text-muted small mb-3">
+              Enter the unique Ticket Code (e.g. <code>EVT-XXXXXX-XXXX</code>), paste a scanned QR JSON payload, or use the live camera scanner below. Duplicate entry is automatically prevented in MongoDB.
+            </p>
+
+            <form id="manualScanForm" class="mb-4">
+              <label class="form-label small fw-semibold">Ticket Code or QR JSON Payload</label>
+              <div class="input-group mb-2">
+                <span class="input-group-text bg-light"><i class="fa-solid fa-ticket text-primary"></i></span>
+                <input type="text" id="scanTicketInput" class="form-control" placeholder="Enter EVT-... or paste QR payload" required>
+                <button type="submit" class="btn-ev-primary">
+                  <i class="fa-solid fa-bolt me-1"></i> Validate & Check In
+                </button>
+              </div>
+            </form>
+
+            <!-- Quick Pick from Recent Unscanned Tickets for Instant Demo Testing -->
+            <div class="p-3 rounded-3 border" style="background:var(--ev-lavender);">
+              <div class="small fw-bold text-primary mb-2">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Quick Test Tickets (From Your Active Events):
+              </div>
+              <div id="quickTestTicketsList" class="d-flex flex-wrap gap-2">
+                <span class="text-muted small">Loading active tickets...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Verification Result Display -->
+        <div class="col-lg-6">
+          <div class="ev-card p-4 h-auto" id="scanResultCard">
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-qrcode fs-1 text-primary mb-3 opacity-50"></i>
+              <h5>Awaiting Ticket Scan</h5>
+              <p class="small mb-0">Scan a QR code or select a ticket on the left to verify authenticity and update check-in status.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/organizer.js"></script>
+  <script>
+    async function loadQuickTestTickets() {
+      const container = document.getElementById('quickTestTicketsList');
+      try {
+        const res = await EventifyApp.api('/organizer/bookings?status=confirmed');
+        const bookings = (res.bookings || []).filter(b => b.ticketId);
+
+        if (bookings.length === 0) {
+          container.innerHTML = `<span class="text-muted small">No tickets issued yet.</span>`;
+          return;
+        }
+
+        container.innerHTML = bookings.slice(0, 6).map(b => {
+          const t = b.ticketId;
+          const isUsed = t.checkInStatus === 'checked_in';
+          return `
+            <button type="button" class="btn btn-sm bg-white border fw-semibold d-flex align-items-center gap-2"
+              onclick="document.getElementById('scanTicketInput').value='${t.ticketCode}';validateTicketNow('${t.ticketCode}')">
+              <i class="fa-solid ${isUsed ? 'fa-circle-check text-secondary' : 'fa-qrcode text-success'}"></i>
+              <span>${t.ticketCode}</span>
+              <span class="badge ${isUsed ? 'bg-secondary' : 'bg-success'}">${isUsed ? 'Used' : 'Unused'}</span>
+            </button>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '';
+      }
+    }
+
+    async function validateTicketNow(inputVal) {
+      const resultCard = document.getElementById('scanResultCard');
+      resultCard.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 small">Verifying ticket authenticity...</p></div>`;
+
+      try {
+        const res = await EventifyApp.api('/tickets/scan', {
+          method: 'POST',
+          body: { qrData: inputVal, ticketCode: inputVal }
+        });
+
+        const t = res.ticket;
+        resultCard.innerHTML = `
+          <div class="p-4 rounded-4 text-center" style="background:#DCFCE7;border:2px solid #10B981;">
+            <i class="fa-solid fa-circle-check text-success" style="font-size:3.5rem;"></i>
+            <h4 class="fw-bold text-success mt-3 mb-1">VALID TICKET • ACCESS GRANTED</h4>
+            <p class="small text-dark mb-3">${res.message}</p>
+            <div class="bg-white p-3 rounded-3 text-start small border">
+              <div class="mb-1"><strong>Ticket ID:</strong> <code>${t.ticketCode}</code></div>
+              <div class="mb-1"><strong>Attendee:</strong> ${t.booking.attendeeName} (${t.booking.attendeeEmail})</div>
+              <div class="mb-1"><strong>Event:</strong> ${t.event.title}</div>
+              <div class="mb-1"><strong>Seats:</strong> <span class="fw-bold text-primary">${t.seats.join(', ')}</span></div>
+              <div><strong>Check-In Timestamp:</strong> ${new Date(t.checkedInAt).toLocaleString()}</div>
+            </div>
+          </div>
+        `;
+        EventifyApp.showToast('Ticket verified and marked Checked-In!', 'success');
+        loadQuickTestTickets();
+      } catch (err) {
+        // Handle Duplicate Entry or Invalid Ticket with visual alert
+        const isDuplicate = err.message.includes('DUPLICATE ENTRY');
+        resultCard.innerHTML = `
+          <div class="p-4 rounded-4 text-center" style="background:${isDuplicate ? '#FEF3C7' : '#FEE2E2'};border:2px solid ${isDuplicate ? '#F59E0B' : '#EF4444'};">
+            <i class="fa-solid ${isDuplicate ? 'fa-triangle-exclamation text-warning' : 'fa-circle-xmark text-danger'}" style="font-size:3.5rem;"></i>
+            <h4 class="fw-bold ${isDuplicate ? 'text-dark' : 'text-danger'} mt-3 mb-2">
+              ${isDuplicate ? 'DUPLICATE ENTRY BLOCKED!' : 'INVALID TICKET'}
+            </h4>
+            <p class="small text-dark mb-0">${err.message}</p>
+          </div>
+        `;
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    document.getElementById('manualScanForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('scanTicketInput').value.trim();
+      if (val) validateTicketNow(val);
+    });
+
+    document.addEventListener('DOMContentLoaded', loadQuickTestTickets);
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Event – EVENTIFY Organizer Studio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <aside class="ev-sidebar" id="ev-organizer-sidebar"></aside>
+
+    <main class="ev-dashboard-main">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Organizer Studio</span>
+          <h3 class="mb-0" id="formPageTitle">Create New Event</h3>
+        </div>
+        <a href="/organizer/manage-events.html" class="btn-ev-outline btn-sm">Manage My Events</a>
+      </div>
+
+      <div class="ev-card p-4 h-auto">
+        <div id="editBookingsLockNotice" class="alert alert-warning small d-none mb-4">
+          <i class="fa-solid fa-shield-halved me-2"></i>
+          <strong>Active Bookings Protection:</strong> Tickets have already been booked for this event. Seating capacity and ticket pricing are locked to protect existing ticket holders.
+        </div>
+
+        <form id="createEventForm" enctype="multipart/form-data" novalidate>
+          <div class="row g-3">
+            <!-- Basic Info -->
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Event Title *</label>
+              <input type="text" name="title" id="evTitle" class="form-control" placeholder="e.g. Cloud & AI Developers Summit 2026" maxlength="140" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Event Category *</label>
+              <select name="category" id="evCategory" class="form-select" required></select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Event Description *</label>
+              <textarea name="description" id="evDescription" class="form-control" rows="4" placeholder="Describe the event agenda, keynote speakers, highlights, and attendee takeaways..." required></textarea>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Event Date *</label>
+              <input type="date" name="date" id="evDate" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Start Time *</label>
+              <input type="time" name="startTime" id="evStartTime" class="form-control" value="18:00" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">End Time *</label>
+              <input type="time" name="endTime" id="evEndTime" class="form-control" value="21:00" required>
+            </div>
+
+            <!-- Venue & Location -->
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Venue Name *</label>
+              <input type="text" name="venue" id="evVenue" class="form-control" placeholder="e.g. Jio World Convention Centre" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label small fw-semibold">Complete Venue Address *</label>
+              <input type="text" name="address" id="evAddress" class="form-control" placeholder="G Block, Bandra Kurla Complex, Mumbai 400098" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">City *</label>
+              <select name="city" id="evCity" class="form-select" required>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Pune">Pune</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Kolkata">Kolkata</option>
+              </select>
+            </div>
+
+            <!-- Interactive Seating, Ticket Type, Pricing & Capacity Configuration -->
+            <div class="col-12 mt-4">
+              <div class="p-3 rounded-3 border" style="background:var(--ev-lavender);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                  <h6 class="fw-bold text-primary mb-0"><i class="fa-solid fa-chair me-2"></i>Ticket Configuration, Pricing & Interactive Capacity</h6>
+                  <div class="d-flex gap-2">
+                    <span class="ev-badge ev-badge-purple">Total Capacity: <strong id="evTotalCapacityDisplay" class="ms-1">60</strong> seats</span>
+                    <span class="ev-badge ev-badge-green">Available Seats: <strong id="evAvailSeatsDisplay" class="ms-1">60</strong></span>
+                  </div>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Ticket Type *</label>
+                    <select name="ticketType" id="evTicketType" class="form-select">
+                      <option value="Multi-Tier Seated (VIP, Premium & Standard)">Multi-Tier Seated (VIP, Premium & Standard)</option>
+                      <option value="Standard Reserved Seating">Standard Reserved Seating</option>
+                      <option value="VIP & Executive Pass">VIP & Executive Pass</option>
+                      <option value="General Admission / Workshop Pass">General Admission / Workshop Pass</option>
+                      <option value="Free Community Pass">Free Community Pass</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Standard Price (₹) *</label>
+                    <input type="number" name="ticketPrice" id="evPrice" class="form-control" value="499" min="0" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Premium Price (₹)</label>
+                    <input type="number" name="premiumPrice" id="evPremiumPrice" class="form-control" value="799" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-semibold">VIP Price (₹)</label>
+                    <input type="number" name="vipPrice" id="evVipPrice" class="form-control" value="1299" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Max Tickets / User *</label>
+                    <input type="number" name="maxTicketsPerCustomer" id="evMaxTickets" class="form-control" value="10" min="1" max="50" required>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Seating Grid (Rows × Columns)</label>
+                    <div class="input-group">
+                      <input type="number" name="rows" id="evRows" class="form-control" value="6" min="2" max="15" title="Rows (2-15)">
+                      <span class="input-group-text">×</span>
+                      <input type="number" name="cols" id="evCols" class="form-control" value="10" min="4" max="20" title="Columns (4-20)">
+                    </div>
+                    <div class="form-text" style="font-size:0.72rem;">Row A = VIP, Rows B-C = Premium, Rows D+ = Standard</div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Calculated Total Capacity</label>
+                    <input type="number" id="evCapacityInput" class="form-control bg-white" value="60" readonly>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Automatic Available Seats</label>
+                    <input type="number" id="evAvailableInput" class="form-control bg-white" value="60" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Poster Upload & Live Preview -->
+            <div class="col-md-5 mt-3">
+              <label class="form-label small fw-semibold">Upload Event Poster Image (JPG/PNG/WEBP, max 5MB)</label>
+              <input type="file" name="poster" id="evPosterFile" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif">
+              <label class="form-label small fw-semibold mt-2">Or Poster Image URL</label>
+              <input type="url" name="posterUrl" id="evPosterUrl" class="form-control" placeholder="https://images.unsplash.com/...">
+            </div>
+            <div class="col-md-7 mt-3">
+              <label class="form-label small fw-semibold d-block">Live Poster Preview</label>
+              <div class="rounded-3 border overflow-hidden position-relative d-flex align-items-center justify-content-center" style="height:145px;background:#F4F0FF;">
+                <img id="evPosterPreviewImg" src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80" alt="Poster Preview" class="w-100 h-100" style="object-fit:cover;">
+                <span class="badge bg-dark bg-opacity-75 position-absolute bottom-0 end-0 m-2 small" id="posterPreviewLabel">Default Event Banner</span>
+              </div>
+            </div>
+
+            <!-- Event Schedule & Terms and Conditions -->
+            <div class="col-md-6 mt-3">
+              <label class="form-label small fw-semibold">Event Schedule / Highlights (One per line: Time | Activity)</label>
+              <textarea id="evScheduleText" class="form-control small" rows="3" placeholder="18:00 | Doors Open & QR Check-In&#10;18:30 | Opening Keynote & Main Session&#10;20:00 | Networking & Certificate Distribution">18:00 | Doors Open & Smart QR Check-In
+18:30 | Opening Keynote & Main Stage Session
+20:00 | Interactive Q&A & Networking</textarea>
+            </div>
+            <div class="col-md-6 mt-3">
+              <label class="form-label small fw-semibold">Event Terms and Conditions *</label>
+              <textarea name="termsAndConditions" id="evTerms" class="form-control small" rows="3" required>1. Entry requires a valid EVENTIFY Smart QR Ticket and government photo ID.
+2. Please arrive at least 30 minutes before the scheduled start time.
+3. Duplicate QR scans are strictly blocked by the anti-fraud entry system.</textarea>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Tags (Comma separated for Smart Recommendations)</label>
+              <input type="text" name="tags" id="evTags" class="form-control" placeholder="AI, Tech Summit, Music, Workshop, Certificate">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="evCertEligible" checked>
+                <label class="form-check-label small fw-semibold" for="evCertEligible">
+                  <i class="fa-solid fa-award text-primary me-1"></i> Enable Participation Certificate
+                </label>
+              </div>
+            </div>
+
+            <div class="col-12 mt-4 pt-3 border-top d-flex flex-wrap gap-3">
+              <button type="submit" id="submitEventBtn" class="btn-ev-primary px-4 py-2">
+                <i class="fa-solid fa-paper-plane me-2"></i> Submit Event for Admin Approval
+              </button>
+              <button type="button" id="saveDraftBtn" class="btn-ev-lavender px-4 py-2">
+                <i class="fa-solid fa-file-pen me-2"></i> Save Event as Draft
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/organizer.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('editId') || urlParams.get('edit');
+    let existingBookingsCount = 0;
+
+    function recalculateCapacity() {
+      const r = Math.min(Math.max( parseInt(document.getElementById('evRows').value, 10) || 6, 2), 15);
+      const c = Math.min(Math.max( parseInt(document.getElementById('evCols').value, 10) || 10, 4), 20);
+      const total = r * c;
+      const avail = Math.max(total - existingBookingsCount, 0);
+      document.getElementById('evTotalCapacityDisplay').textContent = total;
+      document.getElementById('evAvailSeatsDisplay').textContent = avail;
+      document.getElementById('evCapacityInput').value = total;
+      document.getElementById('evAvailableInput').value = avail;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('evDate');
+      dateInput.min = todayStr;
+
+      const d = new Date();
+      d.setDate(d.getDate() + 14);
+      dateInput.value = d.toISOString().split('T')[0];
+
+      document.getElementById('evRows').addEventListener('input', recalculateCapacity);
+      document.getElementById('evCols').addEventListener('input', recalculateCapacity);
+
+      // Ticket Type free pass helper
+      document.getElementById('evTicketType').addEventListener('change', (e) => {
+        if (e.target.value === 'Free Community Pass' && existingBookingsCount === 0) {
+          document.getElementById('evPrice').value = 0;
+          document.getElementById('evPremiumPrice').value = 0;
+          document.getElementById('evVipPrice').value = 0;
+        }
+      });
+
+      // Image File validation & live preview
+      document.getElementById('evPosterFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowed.includes(file.type)) {
+          EventifyApp.showToast('Invalid image format. Please choose a JPG, PNG, WEBP, or GIF image.', 'error');
+          e.target.value = '';
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          EventifyApp.showToast('Poster image size cannot exceed 5MB.', 'error');
+          e.target.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('evPosterPreviewImg').src = ev.target.result;
+          document.getElementById('posterPreviewLabel').textContent = `Selected File: ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('evPosterUrl').addEventListener('input', (e) => {
+        const url = e.target.value.trim();
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          document.getElementById('evPosterPreviewImg').src = url;
+          document.getElementById('posterPreviewLabel').textContent = 'Custom Image URL';
+        }
+      });
+
+      // Load categories
+      const catRes = await EventifyApp.api('/categories');
+      const select = document.getElementById('evCategory');
+      (catRes.categories || []).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c._id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+
+      // If editing an existing event
+      if (editId) {
+        document.getElementById('formPageTitle').textContent = 'Edit Event Details';
+        document.getElementById('submitEventBtn').innerHTML = `<i class="fa-solid fa-floppy-disk me-2"></i> Save & Submit Changes`;
+        try {
+          const evRes = await EventifyApp.api(`/events/${editId}`);
+          const ev = evRes.event;
+          document.getElementById('evTitle').value = ev.title;
+          if (ev.category) document.getElementById('evCategory').value = ev.category._id || ev.category;
+          document.getElementById('evDescription').value = ev.description;
+          if (ev.date) document.getElementById('evDate').value = new Date(ev.date).toISOString().split('T')[0];
+          document.getElementById('evStartTime').value = ev.startTime || '18:00';
+          document.getElementById('evEndTime').value = ev.endTime || '21:00';
+          document.getElementById('evVenue').value = ev.venue;
+          document.getElementById('evAddress').value = ev.address;
+          document.getElementById('evCity').value = ev.city;
+          if (ev.ticketType) document.getElementById('evTicketType').value = ev.ticketType;
+          document.getElementById('evPrice').value = ev.ticketPrice;
+          document.getElementById('evPremiumPrice').value = ev.premiumPrice;
+          document.getElementById('evVipPrice').value = ev.vipPrice;
+          document.getElementById('evMaxTickets').value = ev.maxTicketsPerCustomer || 10;
+          if (ev.seatLayout) {
+            document.getElementById('evRows').value = ev.seatLayout.rows || 6;
+            document.getElementById('evCols').value = ev.seatLayout.cols || 10;
+          }
+          if (ev.poster) {
+            document.getElementById('evPosterPreviewImg').src = ev.poster;
+            document.getElementById('posterPreviewLabel').textContent = 'Current Event Poster';
+            if (ev.poster.startsWith('http')) document.getElementById('evPosterUrl').value = ev.poster;
+          }
+          if (ev.termsAndConditions) {
+            document.getElementById('evTerms').value = ev.termsAndConditions;
+          }
+          if (Array.isArray(ev.eventSchedule) && ev.eventSchedule.length > 0) {
+            document.getElementById('evScheduleText').value = ev.eventSchedule
+              .map(s => `${s.time || ''} | ${s.title || ''}`)
+              .join('\n');
+          }
+          document.getElementById('evTags').value = (ev.tags || []).join(', ');
+          document.getElementById('evCertEligible').checked = Boolean(ev.certificateEligible);
+
+          const bookedCount = (ev.capacity || 0) - (ev.availableSeats || 0);
+          existingBookingsCount = Math.max(ev.bookingsCount || 0, bookedCount);
+          recalculateCapacity();
+
+          if (existingBookingsCount > 0) {
+            document.getElementById('editBookingsLockNotice').classList.remove('d-none');
+            ['evPrice', 'evPremiumPrice', 'evVipPrice', 'evRows', 'evCols'].forEach(id => {
+              document.getElementById(id).readOnly = true;
+              document.getElementById(id).classList.add('bg-light');
+            });
+          }
+        } catch (err) {
+          EventifyApp.showToast(err.message, 'error');
+        }
+      } else {
+        recalculateCapacity();
+      }
+    });
+
+    async function submitEventForm(asDraft = false) {
+      const title = document.getElementById('evTitle').value.trim();
+      const description = document.getElementById('evDescription').value.trim();
+      const dateVal = document.getElementById('evDate').value;
+      const venue = document.getElementById('evVenue').value.trim();
+      const address = document.getElementById('evAddress').value.trim();
+      const price = Number(document.getElementById('evPrice').value);
+      const rows = Number(document.getElementById('evRows').value);
+      const cols = Number(document.getElementById('evCols').value);
+      const maxTickets = Number(document.getElementById('evMaxTickets').value);
+      const terms = document.getElementById('evTerms').value.trim();
+
+      if (!title || !description || !dateVal || !venue || !address || !terms) {
+        EventifyApp.showToast('Please fill in all required event fields.', 'warning');
+        return;
+      }
+
+      if (!editId) {
+        const selectedDate = new Date(dateVal);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate < today) {
+          EventifyApp.showToast('Event date cannot be in the past.', 'warning');
+          return;
+        }
+      }
+
+      if (isNaN(price) || price < 0) {
+        EventifyApp.showToast('Ticket price must be 0 or higher.', 'warning');
+        return;
+      }
+
+      if (rows < 2 || cols < 4 || rows * cols < 1) {
+        EventifyApp.showToast('Please specify a valid seating capacity (at least 2 rows × 4 columns).', 'warning');
+        return;
+      }
+
+      if (maxTickets < 1 || maxTickets > 50) {
+        EventifyApp.showToast('Maximum tickets per customer must be between 1 and 50.', 'warning');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitEventBtn');
+      const draftBtn = document.getElementById('saveDraftBtn');
+      submitBtn.disabled = true;
+      draftBtn.disabled = true;
+
+      try {
+        const scheduleLines = (document.getElementById('evScheduleText').value || '')
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean)
+          .map(line => {
+            const parts = line.split('|');
+            return {
+              time: (parts[0] || '').trim(),
+              title: (parts.slice(1).join('|') || parts[0] || '').trim()
+            };
+          });
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('category', document.getElementById('evCategory').value);
+        formData.append('description', description);
+        formData.append('date', dateVal);
+        formData.append('startTime', document.getElementById('evStartTime').value);
+        formData.append('endTime', document.getElementById('evEndTime').value);
+        formData.append('venue', venue);
+        formData.append('address', address);
+        formData.append('city', document.getElementById('evCity').value);
+        formData.append('ticketType', document.getElementById('evTicketType').value);
+        formData.append('maxTicketsPerCustomer', maxTickets);
+        formData.append('termsAndConditions', terms);
+        formData.append('eventSchedule', JSON.stringify(scheduleLines));
+        formData.append('tags', document.getElementById('evTags').value);
+        formData.append('certificateEligible', document.getElementById('evCertEligible').checked);
+        formData.append('isDraft', asDraft);
+        if (!asDraft) {
+          formData.append('submitForApproval', 'true');
+        }
+
+        if (!editId || existingBookingsCount === 0) {
+          formData.append('ticketPrice', price);
+          formData.append('premiumPrice', document.getElementById('evPremiumPrice').value);
+          formData.append('vipPrice', document.getElementById('evVipPrice').value);
+          formData.append('rows', rows);
+          formData.append('cols', cols);
+        }
+
+        const posterUrl = document.getElementById('evPosterUrl').value.trim();
+        if (posterUrl) formData.append('posterUrl', posterUrl);
+
+        const fileInput = document.getElementById('evPosterFile');
+        if (fileInput.files.length > 0) {
+          formData.append('poster', fileInput.files[0]);
+        }
+
+        const endpoint = editId ? `/events/${editId}` : '/events';
+        const method = editId ? 'PUT' : 'POST';
+
+        const res = await EventifyApp.api(endpoint, {
+          method,
+          body: formData
+        });
+
+        EventifyApp.showToast(res.message, 'success');
+        setTimeout(() => {
+          window.location.href = '/organizer/manage-events.html';
+        }, 650);
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+        submitBtn.disabled = false;
+        draftBtn.disabled = false;
+      }
+    }
+
+    document.getElementById('createEventForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      submitEventForm(false);
+    });
+
+    document.getElementById('saveDraftBtn').addEventListener('click', () => {
+      submitEventForm(true);
+    });
+  </script>
+</body>
+</html>
+
