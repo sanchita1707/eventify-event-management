@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Organizers – EVENTIFY Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <aside class="ev-sidebar" id="ev-admin-sidebar"></aside>
+
+    <main class="ev-dashboard-main">
+      <div class="mb-4">
+        <span class="text-danger fw-bold small text-uppercase">Partner Verification</span>
+        <h3 class="mb-0">Manage Event Organizers</h3>
+      </div>
+
+      <div class="ev-card p-4 h-auto">
+        <div class="table-responsive">
+          <table class="table align-middle small mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Organization Name</th>
+                <th>Owner / Contact</th>
+                <th>Events Hosted</th>
+                <th>Revenue Generated</th>
+                <th>Verification Status</th>
+                <th class="text-end">Update Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminOrganizersTable">
+              <tr><td colspan="6" class="text-center py-4 text-muted">Loading organizers...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    async function loadOrganizers() {
+      const tbody = document.getElementById('adminOrganizersTable');
+      try {
+        const res = await EventifyApp.api('/admin/organizers');
+        const list = res.organizers || [];
+
+        tbody.innerHTML = list.map(o => `
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">${o.organizationName}</div>
+              <div class="text-muted" style="font-size:0.75rem;">${o.description || ''}</div>
+            </td>
+            <td>
+              <div class="fw-semibold">${o.user ? o.user.name : 'Organizer'}</div>
+              <div class="text-muted" style="font-size:0.75rem;">${o.contactEmail}</div>
+            </td>
+            <td><span class="ev-badge ev-badge-purple">${o.totalEventsHosted} Events</span></td>
+            <td class="fw-bold text-success">${EventifyApp.formatCurrency(o.totalRevenue)}</td>
+            <td>
+              <span class="ev-badge ${o.verificationStatus === 'verified' ? 'ev-badge-green' : o.verificationStatus === 'pending' ? 'ev-badge-amber' : 'ev-badge-red'}">
+                ${o.verificationStatus.toUpperCase()}
+              </span>
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <button onclick="setOrgStatus('${o._id}', 'verified')" class="btn btn-outline-success">Verify</button>
+                <button onclick="setOrgStatus('${o._id}', 'rejected')" class="btn btn-outline-danger">Reject</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    async function setOrgStatus(id, verificationStatus) {
+      try {
+        const res = await EventifyApp.api(`/admin/organizers/${id}`, {
+          method: 'PUT',
+          body: { verificationStatus }
+        });
+        EventifyApp.showToast(res.message, 'success');
+        loadOrganizers();
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadOrganizers);
+  </script>
+</body>
+</html>
+

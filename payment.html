@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Checkout (Razorpay Test Mode) – EVENTIFY</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="ev-card p-4 p-md-5 h-auto">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
+              <div>
+                <span class="ev-badge ev-badge-purple mb-1"><i class="fa-solid fa-shield-halved"></i> Step 2 of 2 • Razorpay Test Mode</span>
+                <h3 class="mb-0">Complete Your Payment</h3>
+              </div>
+              <div class="text-end">
+                <span class="small text-muted d-block">Booking Reference</span>
+                <span class="fw-bold text-primary" id="payBookingRef">Loading...</span>
+              </div>
+            </div>
+
+            <div id="paymentDetailsBox">
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+              </div>
+            </div>
+
+            <!-- Razorpay Interactive Test Checkout Modal (when live keys aren't provided or for instant test-mode demo) -->
+            <div class="modal fade" id="razorpayTestModal" tabindex="-1" data-bs-backdrop="static">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="border-radius:20px;overflow:hidden;">
+                  <div class="p-4 text-white d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#2563EB,#6C3CE9);">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="fa-solid fa-bolt fs-4"></i>
+                      <div>
+                        <h6 class="mb-0 text-white fw-bold">Razorpay Secure Checkout</h6>
+                        <span class="badge bg-warning text-dark" style="font-size:0.68rem;">TEST MODE SANDBOX</span>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <div class="small opacity-75">Amount</div>
+                      <div class="fs-5 fw-bold" id="modalPayAmount">₹0</div>
+                    </div>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="small text-muted mb-3">
+                      Order ID: <code id="modalOrderId">order_test_...</code>
+                    </div>
+
+                    <label class="form-label small fw-bold">Select Test Payment Method</label>
+                    <div class="d-grid gap-2 mb-4">
+                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
+                        <input type="radio" name="testPayMethod" value="upi" checked class="form-check-input mt-0">
+                        <i class="fa-solid fa-mobile-screen-button text-primary fs-5"></i>
+                        <div>
+                          <div class="fw-bold small text-dark">UPI / QR (GPay, PhonePe, Paytm)</div>
+                          <div class="text-muted" style="font-size:0.75rem;">Instant test verification (success@razorpay)</div>
+                        </div>
+                      </label>
+                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
+                        <input type="radio" name="testPayMethod" value="card" class="form-check-input mt-0">
+                        <i class="fa-regular fa-credit-card text-primary fs-5"></i>
+                        <div>
+                          <div class="fw-bold small text-dark">Credit / Debit Card (Test Card)</div>
+                          <div class="text-muted" style="font-size:0.75rem;">4111 •••• •••• 1111 | CVV 123</div>
+                        </div>
+                      </label>
+                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
+                        <input type="radio" name="testPayMethod" value="netbanking" class="form-check-input mt-0">
+                        <i class="fa-solid fa-building-columns text-primary fs-5"></i>
+                        <div>
+                          <div class="fw-bold small text-dark">Netbanking (SBI / HDFC / ICICI)</div>
+                          <div class="text-muted" style="font-size:0.75rem;">Razorpay Test Bank Gateway</div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                      <button type="button" id="confirmTestPayBtn" class="btn-ev-primary flex-grow-1 py-2">
+                        <i class="fa-solid fa-circle-check me-1"></i> Authorize Test Payment
+                      </button>
+                      <button type="button" id="failTestPayBtn" class="btn btn-outline-danger py-2">
+                        Simulate Failure
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    EventifyApp.requireAuth();
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingId = urlParams.get('bookingId');
+
+    let currentBooking = null;
+    let currentOrderData = null;
+    let rzpModal = null;
+
+    async function loadBookingForPayment() {
+      if (!bookingId) {
+        window.location.href = '/events.html';
+        return;
+      }
+
+      try {
+        const res = await EventifyApp.api(`/bookings/${bookingId}`);
+        currentBooking = res.booking;
+        document.getElementById('payBookingRef').textContent = currentBooking.bookingReference;
+
+        if (currentBooking.bookingStatus === 'confirmed' && currentBooking.ticketId) {
+          window.location.href = `/ticket.html?id=${currentBooking.ticketId._id || currentBooking.ticketId}`;
+          return;
+        }
+
+        const seatBadges = currentBooking.selectedSeats.map(s => `
+          <span class="ev-badge ev-badge-purple">${s.seatNumber} (${s.tier} • ₹${s.price})</span>
+        `).join(' ');
+
+        document.getElementById('paymentDetailsBox').innerHTML = `
+          <div class="row g-4 align-items-center mb-4">
+            <div class="col-md-8">
+              <h5 class="fw-bold mb-1">${currentBooking.event.title}</h5>
+              <p class="text-muted small mb-2">
+                <i class="fa-regular fa-calendar me-1"></i>${EventifyApp.formatDate(currentBooking.event.date)} at ${currentBooking.event.startTime} &nbsp;|&nbsp;
+                <i class="fa-solid fa-location-dot me-1"></i>${currentBooking.event.venue}, ${currentBooking.event.city}
+              </p>
+              <div class="mb-2">
+                <span class="small fw-semibold text-secondary me-2">Selected Seats:</span>
+                ${seatBadges}
+              </div>
+              <div class="small text-secondary">
+                <strong>Attendee:</strong> ${currentBooking.attendeeName} (${currentBooking.attendeeEmail})
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 border bg-light">
+                <div class="d-flex justify-content-between small mb-1">
+                  <span>Seats (${currentBooking.quantity})</span>
+                  <span>${EventifyApp.formatCurrency(currentBooking.subTotal)}</span>
+                </div>
+                <div class="d-flex justify-content-between small mb-2">
+                  <span>Taxes & Fee (5%)</span>
+                  <span>${EventifyApp.formatCurrency(currentBooking.taxAmount)}</span>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-2">
+                  <span class="fw-bold text-dark">Total</span>
+                  <span class="fs-4 fw-bold text-primary">${EventifyApp.formatCurrency(currentBooking.totalAmount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info border-0 small d-flex align-items-center gap-2 mb-4" style="background:var(--ev-lavender);color:var(--ev-text-dark);">
+            <i class="fa-solid fa-lock text-primary fs-5"></i>
+            <div>
+              <strong>Server-Side Verified Checkout:</strong> Your payment amount (<strong>${EventifyApp.formatCurrency(currentBooking.totalAmount)}</strong>) is calculated on the backend and verified using HMAC-SHA256 cryptographic signatures before issuing your Smart QR Ticket.
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-3">
+            <button type="button" id="payNowBtn" class="btn-ev-primary btn-lg flex-grow-1 py-3">
+              <i class="fa-solid fa-credit-card me-2"></i> Pay ${EventifyApp.formatCurrency(currentBooking.totalAmount)} with Razorpay
+            </button>
+            <a href="/events.html" class="btn-ev-outline btn-lg py-3">Cancel</a>
+          </div>
+        `;
+
+        document.getElementById('payNowBtn').addEventListener('click', initiateRazorpayOrder);
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    async function initiateRazorpayOrder() {
+      const btn = document.getElementById('payNowBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Creating Razorpay Order...`;
+
+      try {
+        const res = await EventifyApp.api('/payments/create-order', {
+          method: 'POST',
+          body: { bookingId: currentBooking._id }
+        });
+
+        currentOrderData = res.order;
+
+        // If live Razorpay test credentials are configured in .env, launch official Razorpay SDK
+        if (res.secretConfigured && typeof Razorpay !== 'undefined') {
+          const options = {
+            key: currentOrderData.keyId,
+            amount: currentOrderData.amount,
+            currency: currentOrderData.currency,
+            name: 'EVENTIFY Smart Events',
+            description: `Booking ${currentOrderData.bookingReference}`,
+            order_id: currentOrderData.id,
+            prefill: currentOrderData.prefill,
+            theme: { color: '#6C3CE9' },
+            handler: async function (response) {
+              await verifyPaymentOnServer({
+                bookingId: currentBooking._id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                paymentMethod: 'razorpay_checkout'
+              });
+            },
+            modal: {
+              ondismiss: function () {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-credit-card me-2"></i> Pay ${EventifyApp.formatCurrency(currentBooking.totalAmount)} with Razorpay`;
+              }
+            }
+          };
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } else {
+          // Open Interactive Razorpay Test Sandbox Modal
+          document.getElementById('modalPayAmount').textContent = EventifyApp.formatCurrency(currentOrderData.amountRupees);
+          document.getElementById('modalOrderId').textContent = currentOrderData.id;
+          rzpModal = new bootstrap.Modal(document.getElementById('razorpayTestModal'));
+          rzpModal.show();
+        }
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-credit-card me-2"></i> Pay ${EventifyApp.formatCurrency(currentBooking.totalAmount)} with Razorpay`;
+      }
+    }
+
+    // Handle Test Sandbox Payment Authorization
+    document.getElementById('confirmTestPayBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('confirmTestPayBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Verifying Signature...`;
+
+      try {
+        const method = document.querySelector('input[name="testPayMethod"]:checked').value;
+        const authRes = await EventifyApp.api('/payments/test-authorize', {
+          method: 'POST',
+          body: {
+            orderId: currentOrderData.id,
+            paymentMethod: method
+          }
+        });
+
+        await verifyPaymentOnServer({
+          bookingId: currentBooking._id,
+          razorpay_order_id: authRes.razorpay_order_id,
+          razorpay_payment_id: authRes.razorpay_payment_id,
+          razorpay_signature: authRes.razorpay_signature,
+          paymentMethod: method
+        });
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Authorize Test Payment`;
+      }
+    });
+
+    // Handle Simulated Payment Failure
+    document.getElementById('failTestPayBtn').addEventListener('click', async () => {
+      try {
+        await EventifyApp.api('/payments/failed', {
+          method: 'POST',
+          body: {
+            bookingId: currentBooking._id,
+            orderId: currentOrderData.id,
+            reason: 'Simulated payment failure by user in Test Mode'
+          }
+        });
+        if (rzpModal) rzpModal.hide();
+        EventifyApp.showToast('Payment failed/cancelled. Seats have been released.', 'error');
+        setTimeout(() => {
+          window.location.href = `/event-details.html?id=${currentBooking.event._id}`;
+        }, 1200);
+      } catch (e) {}
+    });
+
+    async function verifyPaymentOnServer(payload) {
+      const verifyRes = await EventifyApp.api('/payments/verify', {
+        method: 'POST',
+        body: payload
+      });
+
+      if (rzpModal) rzpModal.hide();
+      EventifyApp.showToast('Payment Verified! Generating Smart QR Ticket...', 'success');
+      setTimeout(() => {
+        window.location.href = `/ticket.html?id=${verifyRes.ticket._id}`;
+      }, 600);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadBookingForPayment);
+  </script>
+</body>
+</html>
+

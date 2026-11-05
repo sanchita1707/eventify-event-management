@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Details – EVENTIFY</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div id="eventDetailsContainer" class="py-5">
+    <div class="container text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="text-muted mt-2">Loading event details...</p>
+    </div>
+  </div>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    let currentEvent = null;
+
+    async function loadEventDetails() {
+      if (!eventId) {
+        window.location.href = '/events.html';
+        return;
+      }
+
+      try {
+        const res = await EventifyApp.api(`/events/${eventId}`);
+        currentEvent = res.event;
+        document.title = `${currentEvent.title} – EVENTIFY`;
+
+        const container = document.getElementById('eventDetailsContainer');
+        const seatsLeft = currentEvent.availableSeats;
+        const seatsArr = (currentEvent.seatLayout && currentEvent.seatLayout.seats) || [];
+        const vipAvail = seatsArr.filter(s => s.tier === 'VIP' && s.status === 'available').length;
+        const premAvail = seatsArr.filter(s => s.tier === 'Premium' && s.status === 'available').length;
+        const stdAvail = seatsArr.filter(s => s.tier === 'Standard' && s.status === 'available').length;
+
+        const defaultSchedule = [
+          { time: currentEvent.startTime || '18:00', title: 'Doors Open & Smart QR Ticket Verification' },
+          { time: 'Main Session', title: `${currentEvent.title} – Keynote & Live Experience` },
+          { time: currentEvent.endTime || '21:00', title: 'Closing Remarks, Networking & Certificate Issuance' }
+        ];
+        const scheduleList = (Array.isArray(currentEvent.eventSchedule) && currentEvent.eventSchedule.length > 0)
+          ? currentEvent.eventSchedule
+          : defaultSchedule;
+
+        const termsText = currentEvent.termsAndConditions ||
+          '1. Entry requires a valid EVENTIFY Smart QR Ticket and government photo ID.\n2. Please arrive at least 30 minutes before the scheduled start time.\n3. Duplicate QR scans are strictly blocked by the anti-fraud entry system.';
+
+        const isBookable =
+          currentEvent.approvalStatus === 'approved' &&
+          currentEvent.isPublished !== false &&
+          currentEvent.status === 'upcoming' &&
+          seatsLeft > 0;
+
+        container.innerHTML = `
+          <div class="container">
+            ${currentEvent.approvalStatus !== 'approved' || currentEvent.isPublished === false ? `
+              <div class="alert alert-warning d-flex align-items-center justify-content-between mb-3">
+                <div>
+                  <i class="fa-solid fa-eye-slash me-2"></i>
+                  <strong>Preview Mode:</strong> This event is currently <strong>${(currentEvent.approvalStatus || 'pending').toUpperCase()}</strong>
+                  ${currentEvent.isPublished === false ? '(Unpublished Draft)' : ''} and is only visible to the event organizer and administrators.
+                </div>
+                <span class="ev-badge ev-badge-amber">${currentEvent.approvalStatus.toUpperCase()}</span>
+              </div>
+            ` : ''}
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+              <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="/events.html">Events</a></li>
+                <li class="breadcrumb-item active">${currentEvent.title}</li>
+              </ol>
+            </nav>
+
+            <div class="row g-4">
+              <!-- Left Column: Banner, Description, Pricing Tiers, Schedule, Terms, Reviews -->
+              <div class="col-lg-8">
+                <div class="ev-card overflow-hidden h-auto mb-4">
+                  <div class="position-relative" style="height:380px;background:#1E1B4B;">
+                    <img src="${currentEvent.poster}" class="w-100 h-100" style="object-fit:cover;" alt="${currentEvent.title}">
+                    <span class="ev-card-badge-top fs-6 px-3 py-2">
+                      <i class="fa-solid fa-tag text-warning me-1"></i> ${currentEvent.categoryName}
+                    </span>
+                  </div>
+                  <div class="p-4">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      <span class="ev-badge ev-badge-purple"><i class="fa-solid fa-star text-warning"></i> ${currentEvent.averageRating} (${currentEvent.reviewsCount} reviews)</span>
+                      <span class="ev-badge ${seatsLeft > 0 ? 'ev-badge-green' : 'ev-badge-red'}">
+                        <i class="fa-solid fa-chair"></i> ${seatsLeft > 0 ? `${seatsLeft} of ${currentEvent.capacity} Seats Available` : 'Sold Out'}
+                      </span>
+                      <span class="ev-badge ev-badge-purple"><i class="fa-solid fa-ticket"></i> ${currentEvent.ticketType || 'Multi-Tier Seated'}</span>
+                      ${currentEvent.certificateEligible ? `<span class="ev-badge ev-badge-blue"><i class="fa-solid fa-award"></i> Official Participation Certificate Included</span>` : ''}
+                    </div>
+
+                    <h2 class="mb-3">${currentEvent.title}</h2>
+                    <p class="text-secondary" style="white-space:pre-line;">${currentEvent.description}</p>
+
+                    ${currentEvent.tags && currentEvent.tags.length ? `
+                      <div class="mt-3 pt-3 border-top d-flex flex-wrap gap-2">
+                        ${currentEvent.tags.map(t => `<span class="badge bg-light text-secondary border">#${t}</span>`).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+
+                <!-- Pricing Tiers Overview -->
+                <div class="ev-card p-4 h-auto mb-4">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="fa-solid fa-couch text-primary me-2"></i>Interactive Seating Tiers & Availability</h5>
+                    <span class="small text-muted">Max ${currentEvent.maxTicketsPerCustomer || 10} tickets per customer</span>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="p-3 rounded-3 border bg-light h-100">
+                        <span class="ev-badge ev-badge-purple mb-2">Row A • Front Stage</span>
+                        <h6 class="fw-bold mb-1">VIP Tier</h6>
+                        <div class="fs-5 fw-bold text-primary">${EventifyApp.formatCurrency(currentEvent.vipPrice || currentEvent.ticketPrice * 2)}</div>
+                        <div class="small text-muted mt-1"><i class="fa-solid fa-chair text-success me-1"></i>${vipAvail} VIP seats left</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="p-3 rounded-3 border bg-light h-100">
+                        <span class="ev-badge ev-badge-blue mb-2">Rows B & C • Prime View</span>
+                        <h6 class="fw-bold mb-1">Premium Tier</h6>
+                        <div class="fs-5 fw-bold text-primary">${EventifyApp.formatCurrency(currentEvent.premiumPrice || Math.round(currentEvent.ticketPrice * 1.5))}</div>
+                        <div class="small text-muted mt-1"><i class="fa-solid fa-chair text-success me-1"></i>${premAvail} Premium seats left</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="p-3 rounded-3 border bg-light h-100">
+                        <span class="ev-badge ev-badge-green mb-2">Rows D+ • Arena</span>
+                        <h6 class="fw-bold mb-1">Standard Tier</h6>
+                        <div class="fs-5 fw-bold text-primary">${EventifyApp.formatCurrency(currentEvent.ticketPrice)}</div>
+                        <div class="small text-muted mt-1"><i class="fa-solid fa-chair text-success me-1"></i>${stdAvail} Standard seats left</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Event Schedule & Terms and Conditions -->
+                <div class="row g-4 mb-4">
+                  <div class="col-md-6">
+                    <div class="ev-card p-4 h-100">
+                      <h5 class="mb-3"><i class="fa-regular fa-calendar-check text-primary me-2"></i>Event Schedule</h5>
+                      <div class="d-flex flex-column gap-3">
+                        ${scheduleList.map(item => `
+                          <div class="d-flex align-items-start gap-3">
+                            <span class="ev-badge ev-badge-purple" style="min-width:72px;justify-content:center;">${item.time || 'Schedule'}</span>
+                            <div class="small fw-semibold text-dark">${item.title || item.description || ''}</div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="ev-card p-4 h-100">
+                      <h5 class="mb-3"><i class="fa-solid fa-file-shield text-primary me-2"></i>Terms & Conditions</h5>
+                      <p class="small text-secondary mb-0" style="white-space:pre-line;">${termsText}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ratings & Reviews Section -->
+                <div class="ev-card p-4 h-auto mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0"><i class="fa-regular fa-comments text-primary me-2"></i>Attendee Ratings & Reviews</h5>
+                    <span class="fs-5 fw-bold text-warning"><i class="fa-solid fa-star"></i> ${currentEvent.averageRating} / 5.0</span>
+                  </div>
+
+                  <!-- Review Submission Form -->
+                  <form id="reviewForm" class="p-3 rounded-3 mb-4" style="background:var(--ev-lavender);">
+                    <h6 class="fw-bold mb-2">Rate & Review This Event</h6>
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-4">
+                        <select id="reviewRating" class="form-select form-select-sm" required>
+                          <option value="5">★★★★★ (5 - Excellent)</option>
+                          <option value="4">★★★★☆ (4 - Very Good)</option>
+                          <option value="3">★★★☆☆ (3 - Good)</option>
+                          <option value="2">★★☆☆☆ (2 - Fair)</option>
+                          <option value="1">★☆☆☆☆ (1 - Poor)</option>
+                        </select>
+                      </div>
+                      <div class="col-md-8">
+                        <input type="text" id="reviewTitle" class="form-control form-control-sm" placeholder="Short review headline (e.g. Incredible experience!)" required>
+                      </div>
+                    </div>
+                    <textarea id="reviewComment" class="form-control form-control-sm mb-2" rows="2" placeholder="Share your experience with the event, venue, and speakers..." required></textarea>
+                    <button type="submit" class="btn-ev-primary btn-sm">Submit Review</button>
+                  </form>
+
+                  <div id="reviewsListContainer">
+                    <div class="text-center py-3 text-muted small">Loading reviews...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Sticky Booking Card & Countdown -->
+              <div class="col-lg-4">
+                <div class="ev-card p-4 h-auto sticky-top" style="top:90px;">
+                  <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <div>
+                      <span class="text-muted small d-block">Tickets starting at</span>
+                      <span class="fs-3 fw-bold text-dark">${EventifyApp.formatCurrency(currentEvent.ticketPrice)}</span>
+                    </div>
+                    <button class="btn btn-ev-lavender rounded-circle p-2" style="width:42px;height:42px;" onclick="EventifyApp.toggleWishlist('${currentEvent._id}', this)">
+                      <i class="fa-regular fa-heart"></i>
+                    </button>
+                  </div>
+
+                  <!-- Booking Status Indicator -->
+                  <div class="mb-3 d-flex justify-content-between align-items-center p-2 rounded-3" style="background:var(--ev-lavender);">
+                    <span class="small fw-semibold text-secondary">Booking Status</span>
+                    <span class="ev-badge ${isBookable ? 'ev-badge-green' : 'ev-badge-red'}">
+                      <i class="fa-solid ${isBookable ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                      ${isBookable ? 'Open for Booking' : (seatsLeft <= 0 ? 'Sold Out' : currentEvent.status.toUpperCase())}
+                    </span>
+                  </div>
+
+                  <!-- Live Countdown -->
+                  <div class="mb-4">
+                    <label class="small fw-bold text-uppercase text-primary mb-2 d-block">
+                      <i class="fa-regular fa-clock me-1"></i> Event Countdown
+                    </label>
+                    <div id="eventDetailCountdown"></div>
+                  </div>
+
+                  <!-- Key Event Details -->
+                  <div class="d-flex flex-column gap-3 mb-4">
+                    <div class="d-flex align-items-start gap-3">
+                      <div class="ev-stat-icon" style="width:42px;height:42px;font-size:1rem;"><i class="fa-regular fa-calendar-days"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark small">Date & Time</div>
+                        <div class="text-muted small">${EventifyApp.formatDate(currentEvent.date)} • ${currentEvent.startTime} to ${currentEvent.endTime || '21:00'}</div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                      <div class="ev-stat-icon" style="width:42px;height:42px;font-size:1rem;"><i class="fa-solid fa-location-dot"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark small">Venue & Complete Address</div>
+                        <div class="text-muted small">${currentEvent.venue}, ${currentEvent.address}, ${currentEvent.city}</div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                      <div class="ev-stat-icon" style="width:42px;height:42px;font-size:1rem;"><i class="fa-solid fa-user-tie"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark small">Organizer Information</div>
+                        <div class="text-muted small">${currentEvent.organizerName}</div>
+                        ${currentEvent.organizer && currentEvent.organizer.email ? `<div class="text-muted" style="font-size:0.72rem;">${currentEvent.organizer.email}</div>` : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  ${isBookable ? `
+                    <a href="/booking.html?eventId=${currentEvent._id}" class="btn-ev-primary w-100 py-3 fs-6">
+                      <i class="fa-solid fa-chair me-2"></i> Book Tickets & Select Seats
+                    </a>
+                  ` : `
+                    <button class="btn btn-secondary w-100 py-3" disabled>
+                      ${seatsLeft <= 0 ? 'Sold Out' : 'Booking Currently Unavailable'}
+                    </button>
+                  `}
+
+                  <div class="text-center mt-3 small text-muted">
+                    <i class="fa-solid fa-shield-halved text-success me-1"></i> Instant Smart QR Ticket & Razorpay Protection
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Related Events Section -->
+            <div class="mt-5 pt-4 border-top">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <span class="text-primary fw-bold small text-uppercase">Similar Experiences</span>
+                  <h4 class="mb-0">Related Events You May Like</h4>
+                </div>
+                <a href="/events.html?category=${encodeURIComponent(currentEvent.categoryName)}" class="btn-ev-outline btn-sm">View All in ${currentEvent.categoryName}</a>
+              </div>
+              <div class="row g-4" id="relatedEventsGrid">
+                <div class="col-12 text-center py-3 text-muted small">Loading related events...</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        EventifyApp.startCountdown(currentEvent.date, 'eventDetailCountdown');
+        loadReviews();
+        loadRelatedEvents(currentEvent.categoryName, currentEvent._id);
+
+        document.getElementById('reviewForm').addEventListener('submit', handleReviewSubmit);
+      } catch (err) {
+        document.getElementById('eventDetailsContainer').innerHTML = `
+          <div class="container text-center py-5">
+            <h4 class="text-danger">${err.message}</h4>
+            <a href="/events.html" class="btn-ev-primary mt-3">Back to Events</a>
+          </div>
+        `;
+      }
+    }
+
+    async function loadReviews() {
+      const list = document.getElementById('reviewsListContainer');
+      try {
+        const res = await EventifyApp.api(`/reviews/event/${eventId}`);
+        const reviews = res.reviews || [];
+        if (reviews.length === 0) {
+          list.innerHTML = `<div class="text-muted small py-3 text-center">No reviews yet. Be the first to review this event!</div>`;
+          return;
+        }
+        list.innerHTML = reviews.map(r => `
+          <div class="border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-dark small">${r.user ? r.user.name : 'Attendee'}</span>
+                ${r.isVerifiedAttendee ? `<span class="ev-badge ev-badge-green" style="font-size:0.68rem;"><i class="fa-solid fa-circle-check"></i> Verified Booking</span>` : ''}
+              </div>
+              <span class="text-warning small">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+            </div>
+            ${r.title ? `<div class="fw-semibold text-dark small">${r.title}</div>` : ''}
+            <p class="text-secondary small mb-1">${r.comment}</p>
+            <span class="text-muted" style="font-size:0.72rem;">${EventifyApp.formatDate(r.createdAt)}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = '';
+      }
+    }
+
+    async function handleReviewSubmit(e) {
+      e.preventDefault();
+      if (!EventifyApp.getUser()) {
+        EventifyApp.showToast('Please login to submit a review', 'warning');
+        setTimeout(() => { window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`; }, 900);
+        return;
+      }
+
+      try {
+        const rating = document.getElementById('reviewRating').value;
+        const title = document.getElementById('reviewTitle').value;
+        const comment = document.getElementById('reviewComment').value;
+
+        const res = await EventifyApp.api('/reviews', {
+          method: 'POST',
+          body: { eventId, rating, title, comment }
+        });
+        EventifyApp.showToast(res.message, 'success');
+        document.getElementById('reviewForm').reset();
+        loadReviews();
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    async function loadRelatedEvents(categoryName, currentId) {
+      const grid = document.getElementById('relatedEventsGrid');
+      if (!grid) return;
+      try {
+        const res = await EventifyApp.api(`/events?category=${encodeURIComponent(categoryName)}&limit=4`);
+        let related = (res.events || []).filter(e => e._id !== currentId).slice(0, 3);
+        if (related.length === 0) {
+          const fallback = await EventifyApp.api('/events?limit=4');
+          related = (fallback.events || []).filter(e => e._id !== currentId).slice(0, 3);
+        }
+        if (related.length === 0) {
+          grid.innerHTML = `<div class="col-12 text-muted small text-center">No additional related events found.</div>`;
+          return;
+        }
+        grid.innerHTML = related.map(e => EventifyApp.renderEventCard(e, [])).join('');
+      } catch (e) {
+        grid.innerHTML = '';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadEventDetails);
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Bookings – EVENTIFY Organizer Studio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <aside class="ev-sidebar" id="ev-organizer-sidebar"></aside>
+
+    <main class="ev-dashboard-main">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Reservations & Participant Roster</span>
+          <h3 class="mb-0">Manage Event Bookings</h3>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" onclick="exportBookingsCSV()" class="btn-ev-primary btn-sm">
+            <i class="fa-solid fa-file-csv me-1"></i> Export Participant List (CSV)
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="ev-card p-3 mb-4 h-auto">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-primary"></i></span>
+              <input type="text" id="orgBookingSearch" class="form-control border-start-0" placeholder="Search attendee, email, ref, or ticket...">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select id="bookingEventFilter" class="form-select form-select-sm">
+              <option value="">All My Events</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select id="bookingStatusFilter" class="form-select form-select-sm">
+              <option value="all">All Payment & Check-In Statuses</option>
+              <option value="completed">Payment Completed</option>
+              <option value="pending">Payment Pending</option>
+              <option value="checked_in">QR Checked In</option>
+              <option value="unused">QR Unused</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ev-card p-4 h-auto">
+        <div class="table-responsive">
+          <table class="table align-middle small mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Booking Ref</th>
+                <th>Ticket Code</th>
+                <th>Customer Info</th>
+                <th>Event</th>
+                <th>Qty & Seats</th>
+                <th>Total Paid</th>
+                <th>Payment</th>
+                <th>Check-In</th>
+              </tr>
+            </thead>
+            <tbody id="orgBookingsTable">
+              <tr><td colspan="8" class="text-center py-4 text-muted">Loading bookings...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/organizer.js"></script>
+  <script>
+    let orgBookingsCache = [];
+
+    async function initManageBookings() {
+      const evRes = await EventifyApp.api('/organizer/events');
+      const select = document.getElementById('bookingEventFilter');
+      (evRes.events || []).forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e._id;
+        opt.textContent = e.title;
+        select.appendChild(opt);
+      });
+
+      select.addEventListener('change', () => loadBookings(select.value));
+      document.getElementById('orgBookingSearch').addEventListener('input', renderOrgBookings);
+      document.getElementById('bookingStatusFilter').addEventListener('change', renderOrgBookings);
+      loadBookings('');
+    }
+
+    async function loadBookings(eventId = '') {
+      const tbody = document.getElementById('orgBookingsTable');
+      try {
+        const query = eventId ? `?eventId=${eventId}` : '';
+        const res = await EventifyApp.api(`/organizer/bookings${query}`);
+        orgBookingsCache = res.bookings || [];
+        renderOrgBookings();
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    function renderOrgBookings() {
+      const tbody = document.getElementById('orgBookingsTable');
+      const q = (document.getElementById('orgBookingSearch').value || '').trim().toLowerCase();
+      const st = document.getElementById('bookingStatusFilter').value;
+
+      const filtered = orgBookingsCache.filter(b => {
+        const t = b.ticketId || {};
+        const matchQ = !q ||
+          (b.bookingReference && b.bookingReference.toLowerCase().includes(q)) ||
+          (b.attendeeName && b.attendeeName.toLowerCase().includes(q)) ||
+          (b.attendeeEmail && b.attendeeEmail.toLowerCase().includes(q)) ||
+          (t.ticketCode && t.ticketCode.toLowerCase().includes(q));
+        let matchSt = true;
+        if (st === 'completed' || st === 'pending') matchSt = b.paymentStatus === st;
+        if (st === 'checked_in' || st === 'unused') matchSt = t.checkInStatus === st;
+        return matchQ && matchSt;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No matching bookings found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const seats = (b.selectedSeats || []).map(s => s.seatNumber).join(', ');
+        const t = b.ticketId;
+        return `
+          <tr>
+            <td class="fw-bold text-primary">${b.bookingReference}</td>
+            <td><code>${t ? t.ticketCode : 'N/A'}</code></td>
+            <td>
+              <div class="fw-semibold text-dark">${b.attendeeName}</div>
+              <div class="text-muted" style="font-size:0.75rem;">${b.attendeeEmail} ${b.attendeePhone ? '• ' + b.attendeePhone : ''}</div>
+            </td>
+            <td>${b.event ? b.event.title : 'Event'}</td>
+            <td>
+              <span class="fw-bold text-dark me-1">${b.quantity}x</span>
+              <span class="ev-badge ev-badge-purple">${seats}</span>
+            </td>
+            <td class="fw-bold">${EventifyApp.formatCurrency(b.totalAmount)}</td>
+            <td>
+              <span class="ev-badge ${b.paymentStatus === 'completed' ? 'ev-badge-green' : 'ev-badge-amber'}">
+                ${b.paymentStatus.toUpperCase()}
+              </span>
+            </td>
+            <td>
+              <span class="ev-badge ${t && t.checkInStatus === 'checked_in' ? 'ev-badge-green' : 'ev-badge-blue'}">
+                ${t ? t.checkInStatus.toUpperCase() : 'PENDING'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportBookingsCSV() {
+      if (orgBookingsCache.length === 0) {
+        EventifyApp.showToast('No bookings available to export', 'warning');
+        return;
+      }
+      const headers = ['Booking Ref', 'Ticket Code', 'Customer Name', 'Email', 'Phone', 'Event', 'Qty', 'Seats', 'Total Paid', 'Payment Status', 'Check-In Status'];
+      const rows = orgBookingsCache.map(b => {
+        const t = b.ticketId || {};
+        const seats = (b.selectedSeats || []).map(s => s.seatNumber).join(' ');
+        return [
+          b.bookingReference,
+          t.ticketCode || '',
+          `"${(b.attendeeName || '').replace(/"/g, '""')}"`,
+          b.attendeeEmail,
+          b.attendeePhone || '',
+          `"${(b.event ? b.event.title : '').replace(/"/g, '""')}"`,
+          b.quantity,
+          `"${seats}"`,
+          b.totalAmount,
+          b.paymentStatus,
+          t.checkInStatus || 'pending'
+        ].join(',');
+      });
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+      const link = document.createElement('a');
+      link.setAttribute('href', encodeURI(csvContent));
+      link.setAttribute('download', `EVENTIFY-Bookings-${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      EventifyApp.showToast('Bookings exported as CSV!', 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', initManageBookings);
+  </script>
+</body>
+</html>
+

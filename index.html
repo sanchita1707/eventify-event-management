@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVENTIFY – Smart Event Management & Online Booking Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Dynamic Navbar -->
+  <div id="ev-navbar-placeholder"></div>
+
+  <!-- HERO SECTION -->
+  <section class="ev-hero">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+          <div class="ev-hero-badge">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>India's #1 Smart QR & Interactive Seat Booking Platform</span>
+          </div>
+          <h1 class="ev-hero-title">
+            Experience Unforgettable <span class="ev-text-gradient">Live Events, Summits & Concerts</span>
+          </h1>
+          <p class="lead text-secondary mb-4" style="font-size:1.05rem;">
+            Pick your exact seats on an interactive live map, pay securely with Razorpay, receive tamper-proof Smart QR tickets, and download official participation certificates automatically.
+          </p>
+
+          <!-- Search Events Bar -->
+          <form id="heroSearchForm" class="ev-search-box">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-5">
+                <div class="ev-search-input-group">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="heroSearchKeyword" placeholder="Search events, concerts, AI summits...">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="ev-search-input-group">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <select id="heroSearchCategory">
+                    <option value="all">All Categories</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="ev-search-input-group border-0">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <select id="heroSearchCity">
+                    <option value="all">All Cities</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn-ev-primary w-100 py-2">
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Quick Trust Metrics -->
+          <div class="d-flex flex-wrap gap-4 mt-4 pt-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge rounded-circle bg-success p-2"><i class="fa-solid fa-qrcode text-white"></i></span>
+              <span class="small fw-semibold text-dark">Smart QR Anti-Duplicate Entry</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge rounded-circle bg-primary p-2"><i class="fa-solid fa-couch text-white"></i></span>
+              <span class="small fw-semibold text-dark">Live Seat Selection</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge rounded-circle bg-warning p-2"><i class="fa-solid fa-award text-dark"></i></span>
+              <span class="small fw-semibold text-dark">Instant PDF Certificates</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spotlight Next Event Countdown Card -->
+        <div class="col-lg-5">
+          <div class="ev-card p-4 border-2 shadow-lg" style="background: linear-gradient(160deg, #FFFFFF 0%, #F4F0FF 100%);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="ev-badge ev-badge-purple"><i class="fa-solid fa-bolt"></i> Spotlight Flagship Event</span>
+              <span class="ev-badge ev-badge-green"><i class="fa-solid fa-circle-check"></i> Booking Open</span>
+            </div>
+            <div id="spotlightEventContainer">
+              <div class="text-center py-4 text-muted">Loading spotlight event...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR CATEGORIES SECTION -->
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Browse By Interest</span>
+          <h2 class="mb-0">Popular Categories</h2>
+        </div>
+        <a href="/categories.html" class="btn-ev-lavender btn-sm">View All Categories <i class="fa-solid fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="row g-4" id="homeCategoriesGrid">
+        <div class="col-12 text-center py-4 text-muted">Loading categories...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED EVENTS SECTION -->
+  <section class="py-5 bg-white border-top border-bottom">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Handpicked For You</span>
+          <h2 class="mb-0">Featured Events</h2>
+        </div>
+        <a href="/events.html?featured=true" class="btn-ev-outline btn-sm">Explore Featured <i class="fa-solid fa-arrow-right ms-1"></i></a>
+      </div>
+      <div class="row g-4" id="featuredEventsGrid">
+        <div class="col-12 text-center py-4 text-muted">Loading featured events...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SMART RECOMMENDATIONS SECTION -->
+  <section class="py-5" style="background: linear-gradient(180deg, #F4F0FF 0%, #FAF9FE 100%);">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-end mb-3">
+        <div>
+          <span class="ev-badge ev-badge-purple mb-2"><i class="fa-solid fa-brain"></i> AI-Powered Personalization</span>
+          <h2 class="mb-1">Smart Event Recommendations</h2>
+          <p class="text-muted small mb-0">Curated dynamically based on your selected interests, past bookings, and favorite categories.</p>
+        </div>
+        <!-- Interest Filter Pills -->
+        <div class="d-flex flex-wrap gap-2 mt-3 mt-lg-0" id="interestPills">
+          <button class="btn btn-sm btn-ev-primary" data-interest="">All Recommended</button>
+          <button class="btn btn-sm btn-ev-lavender" data-interest="Technology">Tech & AI</button>
+          <button class="btn btn-sm btn-ev-lavender" data-interest="Music">Music & Concerts</button>
+          <button class="btn btn-sm btn-ev-lavender" data-interest="Workshop">Bootcamps</button>
+          <button class="btn btn-sm btn-ev-lavender" data-interest="Comedy">Comedy</button>
+        </div>
+      </div>
+      <div class="row g-4 mt-2" id="recommendedEventsGrid">
+        <div class="col-12 text-center py-4 text-muted">Loading personalized recommendations...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRENDING & UPCOMING EVENTS SECTION -->
+  <section class="py-5 bg-white border-top">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Most Popular & Next Up</span>
+          <h2 class="mb-0">Trending & Upcoming Events</h2>
+        </div>
+        <ul class="nav nav-pills gap-2 mb-0" id="eventTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="btn-ev-primary active" id="trending-tab" data-bs-toggle="pill" data-bs-target="#trendingPane" type="button">
+              <i class="fa-solid fa-fire me-1"></i> Trending Events
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="btn-ev-lavender" id="upcoming-tab" data-bs-toggle="pill" data-bs-target="#upcomingPane" type="button">
+              <i class="fa-regular fa-calendar-days me-1"></i> Upcoming Schedule
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="tab-content w-100">
+        <div class="tab-pane fade show active w-100" id="trendingPane" role="tabpanel">
+          <div class="row g-4" id="trendingEventsGrid"></div>
+        </div>
+        <div class="tab-pane fade w-100" id="upcomingPane" role="tabpanel">
+          <div class="row g-4" id="upcomingEventsGrid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS SECTION -->
+  <section class="py-5">
+    <div class="container">
+      <div class="text-center max-w-600 mx-auto mb-5">
+        <span class="text-primary fw-bold small text-uppercase">Loved By Attendees & Organizers</span>
+        <h2 class="mb-2">What Our Community Says</h2>
+        <p class="text-muted small mb-0">Trusted by thousands of event attendees, college communities, and professional organizers across India.</p>
+      </div>
+      <div class="row g-4 align-items-stretch">
+        <div class="col-12 col-md-6 col-lg-4 d-flex">
+          <div class="ev-testimonial-card w-100">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-warning">
+                  <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <span class="ev-badge ev-badge-purple">Verified Attendee</span>
+              </div>
+              <p class="ev-testimonial-quote">
+                "The interactive seat map let me pick front-row VIP seats for the AI Global Summit in seconds. Scanning the QR code at the venue took less than 2 seconds!"
+              </p>
+            </div>
+            <div class="ev-testimonial-author">
+              <div class="ev-testimonial-avatar bg-primary text-white">AS</div>
+              <div>
+                <h6 class="mb-0 fw-bold">Aarav Sharma</h6>
+                <span class="text-muted small">B.Sc. CS Student, Mumbai</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 d-flex">
+          <div class="ev-testimonial-card w-100">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-warning">
+                  <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <span class="ev-badge ev-badge-green">Verified Organizer</span>
+              </div>
+              <p class="ev-testimonial-quote">
+                "As an event organizer, EVENTIFY's real-time dashboard, Chart.js revenue analytics, and duplicate-entry QR scanner eliminated all gate chaos."
+              </p>
+            </div>
+            <div class="ev-testimonial-author">
+              <div class="ev-testimonial-avatar bg-success text-white">RK</div>
+              <div>
+                <h6 class="mb-0 fw-bold">Rohan Kapoor</h6>
+                <span class="text-muted small">Founder, NovaLive Concerts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-12 col-lg-4 d-flex">
+          <div class="ev-testimonial-card w-100">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-warning">
+                  <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <span class="ev-badge ev-badge-purple">Certificate Holder</span>
+              </div>
+              <p class="ev-testimonial-quote">
+                "Being able to automatically download my verified PDF Participation Certificate right after attending the Full-Stack Bootcamp was a game changer for my resume!"
+              </p>
+            </div>
+            <div class="ev-testimonial-author">
+              <div class="ev-testimonial-avatar bg-info text-dark">AD</div>
+              <div>
+                <h6 class="mb-0 fw-bold">Ananya Deshmukh</h6>
+                <span class="text-muted small">UI/UX Designer, Pune</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER FOR ORGANIZERS -->
+  <section class="py-5">
+    <div class="container">
+      <div class="p-5 rounded-4 text-white shadow-lg" style="background: linear-gradient(135deg, #6C3CE9 0%, #1E1B4B 100%);">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <h2 class="text-white mb-2">Hosting a College Fest, Tech Conference, or Live Concert?</h2>
+            <p class="mb-0 text-light opacity-75">
+              Create your organizer account in 60 seconds, configure custom seating tiers, track live ticket sales, and validate attendees with our Smart QR Scanner.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a href="/register.html?role=organizer" class="btn btn-light btn-lg fw-bold text-primary px-4 rounded-pill">
+              <i class="fa-solid fa-rocket me-2"></i>Become an Organizer
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dynamic Footer -->
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    let userWishlistIds = [];
+
+    async function initHomePage() {
+      try {
+        // If logged in, fetch user's wishlist IDs
+        if (EventifyApp.getUser()) {
+          try {
+            const wRes = await EventifyApp.api('/wishlist');
+            userWishlistIds = (wRes.wishlist || []).filter(w => w && w.event).map(w => w.event._id);
+          } catch (e) {}
+        }
+
+        // Load Categories
+        const catRes = await EventifyApp.api('/categories');
+        const categories = catRes.categories || [];
+        const catSelect = document.getElementById('heroSearchCategory');
+        const catGrid = document.getElementById('homeCategoriesGrid');
+
+        categories.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.name;
+          opt.textContent = c.name;
+          catSelect.appendChild(opt);
+        });
+
+        catGrid.innerHTML = categories.map(c => {
+          const count = Number(c.eventCount) || 0;
+          const countText = count === 1 ? '1 Event' : `${count} Events`;
+          return `
+            <div class="col-6 col-md-4 col-lg-3 d-flex">
+              <div class="ev-category-card w-100" onclick="window.location.href='/events.html?category=${encodeURIComponent(c.name)}'">
+                <div class="ev-category-icon">
+                  <i class="fa-solid ${c.icon || 'fa-calendar-star'}"></i>
+                </div>
+                <h6 class="ev-category-title">${c.name}</h6>
+                <span class="ev-category-count">${countText}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Load All Approved Events
+        const evRes = await EventifyApp.api('/events?limit=12');
+        const allEvents = evRes.events || [];
+
+        // Spotlight Event + Live Countdown
+        if (allEvents.length > 0) {
+          const spot = allEvents[0];
+          document.getElementById('spotlightEventContainer').innerHTML = `
+            <img src="${spot.poster}" class="w-100 rounded-3 mb-3" style="height:190px;object-fit:cover;" alt="${spot.title}">
+            <div class="small text-primary fw-bold mb-1"><i class="fa-regular fa-calendar me-1"></i>${EventifyApp.formatDate(spot.date)} • ${spot.startTime}</div>
+            <h5 class="fw-bold mb-2">${spot.title}</h5>
+            <p class="small text-muted mb-3"><i class="fa-solid fa-location-dot me-1 text-primary"></i>${spot.venue}, ${spot.city}</p>
+            <div class="mb-3">
+              <div class="small fw-semibold text-secondary mb-2">Event Starts In:</div>
+              <div id="heroSpotlightCountdown"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <div>
+                <span class="small text-muted d-block">Tickets from</span>
+                <span class="fs-5 fw-bold text-dark">${EventifyApp.formatCurrency(spot.ticketPrice)}</span>
+              </div>
+              <a href="/event-details.html?id=${spot._id}" class="btn-ev-primary">Reserve Seats <i class="fa-solid fa-arrow-right ms-1"></i></a>
+            </div>
+          `;
+          EventifyApp.startCountdown(spot.date, 'heroSpotlightCountdown');
+        }
+
+        // Featured Events
+        const featured = allEvents.filter(e => e.isFeatured).slice(0, 3);
+        document.getElementById('featuredEventsGrid').innerHTML =
+          (featured.length ? featured : allEvents.slice(0, 3))
+            .map(e => EventifyApp.renderEventCard(e, userWishlistIds))
+            .join('');
+
+        // Trending & Upcoming
+        const trending = allEvents.filter(e => e.isTrending).slice(0, 6);
+        document.getElementById('trendingEventsGrid').innerHTML =
+          (trending.length ? trending : allEvents.slice(0, 6))
+            .map(e => EventifyApp.renderEventCard(e, userWishlistIds))
+            .join('');
+
+        document.getElementById('upcomingEventsGrid').innerHTML =
+          allEvents.slice(0, 6).map(e => EventifyApp.renderEventCard(e, userWishlistIds)).join('');
+
+        // Load Smart Recommendations
+        loadRecommendations('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadRecommendations(interest = '') {
+      try {
+        const grid = document.getElementById('recommendedEventsGrid');
+        const query = interest ? `?interests=${encodeURIComponent(interest)}` : '';
+        const res = await EventifyApp.api(`/events/recommendations${query}`);
+        const events = res.events || [];
+        if (events.length === 0) {
+          grid.innerHTML = `<div class="col-12 text-center py-4 text-muted">No matching events found.</div>`;
+          return;
+        }
+        grid.innerHTML = events.slice(0, 3).map(e => EventifyApp.renderEventCard(e, userWishlistIds)).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Interest Pills Handler
+    document.querySelectorAll('#interestPills button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#interestPills button').forEach(b => {
+          b.className = 'btn btn-sm btn-ev-lavender';
+        });
+        btn.className = 'btn btn-sm btn-ev-primary';
+        loadRecommendations(btn.dataset.interest);
+      });
+    });
+
+    // Tab styling switcher
+    document.querySelectorAll('#eventTabs button').forEach(btn => {
+      btn.addEventListener('shown.bs.tab', (e) => {
+        document.querySelectorAll('#eventTabs button').forEach(b => b.className = 'btn-ev-lavender');
+        e.target.className = 'btn-ev-primary active';
+      });
+    });
+
+    // Hero Search Submit
+    document.getElementById('heroSearchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const search = document.getElementById('heroSearchKeyword').value.trim();
+      const category = document.getElementById('heroSearchCategory').value;
+      const city = document.getElementById('heroSearchCity').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (category && category !== 'all') params.set('category', category);
+      if (city && city !== 'all') params.set('city', city);
+      window.location.href = `/events.html?${params.toString()}`;
+    });
+
+    document.addEventListener('DOMContentLoaded', initHomePage);
+  </script>
+</body>
+</html>
+

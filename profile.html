@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Dashboard & Profile – EVENTIFY</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <div class="ev-dashboard-wrapper">
+    <!-- Customer Sidebar Navigation -->
+    <aside class="ev-sidebar">
+      <div class="ev-sidebar-profile">
+        <div class="ev-sidebar-avatar" id="profAvatarInitial">U</div>
+        <h6 class="fw-bold mb-0 text-dark" id="profDisplayName">Loading...</h6>
+        <div class="text-muted small text-truncate mb-2" id="profDisplayEmail"></div>
+        <span class="ev-badge ev-badge-purple text-uppercase" id="profDisplayRole">Customer</span>
+      </div>
+
+      <nav class="d-flex flex-column" id="customerSidebarNav">
+        <a href="#overview" class="ev-sidebar-link active" onclick="scrollToDashSection('overview', this)">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Overview</span>
+        </a>
+        <a href="/events.html" class="ev-sidebar-link">
+          <i class="fa-solid fa-compass"></i>
+          <span>Explore Events</span>
+        </a>
+        <a href="#upcoming-bookings" class="ev-sidebar-link" onclick="scrollToDashSection('upcoming-bookings', this)">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>My Bookings</span>
+        </a>
+        <a href="#my-tickets" class="ev-sidebar-link" onclick="scrollToDashSection('my-tickets', this)">
+          <i class="fa-solid fa-qrcode"></i>
+          <span>My Tickets</span>
+        </a>
+        <a href="#saved-wishlist" class="ev-sidebar-link" onclick="scrollToDashSection('saved-wishlist', this)">
+          <i class="fa-regular fa-heart"></i>
+          <span>Wishlist</span>
+        </a>
+        <a href="#recent-notifications" class="ev-sidebar-link" onclick="scrollToDashSection('recent-notifications', this)">
+          <i class="fa-regular fa-bell"></i>
+          <span>Notifications</span>
+        </a>
+        <a href="#account-settings" class="ev-sidebar-link" onclick="scrollToDashSection('account-settings', this)">
+          <i class="fa-regular fa-user"></i>
+          <span>My Profile</span>
+        </a>
+        <hr class="my-2">
+        <button type="button" onclick="EventifyApp.logout()" class="ev-sidebar-link border-0 bg-transparent text-danger text-start w-100">
+          <i class="fa-solid fa-right-from-bracket text-danger"></i>
+          <span>Logout</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Customer Dashboard Content -->
+    <main class="ev-dashboard-main" id="overview">
+      <!-- 1. Welcome Banner -->
+      <div class="ev-card p-4 mb-4 h-auto border-0 shadow-sm" style="background:linear-gradient(135deg, #6C3CE9 0%, #3B1C8C 100%);color:#fff;">
+        <div class="row align-items-center g-3">
+          <div class="col-lg-8">
+            <span class="badge bg-white text-primary mb-2 px-3 py-1 rounded-pill fw-semibold">
+              <i class="fa-solid fa-sparkles me-1"></i> Customer Portal
+            </span>
+            <h3 class="text-white fw-bold mb-1" id="welcomeCustomerHeading">Welcome back!</h3>
+            <p class="text-light opacity-75 small mb-0">
+              Manage your upcoming event bookings, access Smart QR entry passes, download participation certificates, and discover events tailored to your interests.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a href="/events.html" class="btn btn-light fw-bold text-primary rounded-pill px-4 py-2">
+              <i class="fa-solid fa-magnifying-glass me-1"></i> Browse Live Events
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Statistics Cards: Total Bookings, Upcoming Events, Completed Events, Saved Events -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+          <div class="ev-stat-card">
+            <div>
+              <div class="text-muted small">Total Bookings</div>
+              <div class="fs-3 fw-bold text-primary" id="statBookings">0</div>
+            </div>
+            <div class="ev-stat-icon"><i class="fa-solid fa-ticket"></i></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="ev-stat-card">
+            <div>
+              <div class="text-muted small">Upcoming Events</div>
+              <div class="fs-3 fw-bold text-dark" id="statUpcoming">0</div>
+            </div>
+            <div class="ev-stat-icon" style="background:#DBEAFE;color:#2563EB;"><i class="fa-regular fa-calendar-check"></i></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="ev-stat-card">
+            <div>
+              <div class="text-muted small">Completed Events</div>
+              <div class="fs-3 fw-bold text-success" id="statCompleted">0</div>
+            </div>
+            <div class="ev-stat-icon" style="background:#DCFCE7;color:#10B981;"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="ev-stat-card">
+            <div>
+              <div class="text-muted small">Saved Events</div>
+              <div class="fs-3 fw-bold text-danger" id="statWishlist">0</div>
+            </div>
+            <div class="ev-stat-icon" style="background:#FEE2E2;color:#EF4444;"><i class="fa-regular fa-heart"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Upcoming Bookings & 3. Recently Booked Events -->
+      <div class="row g-4 mb-4" id="upcoming-bookings">
+        <div class="col-lg-7">
+          <div class="ev-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h5 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Upcoming Bookings</h5>
+              <a href="/my-bookings.html" class="btn-ev-lavender btn-sm">All Bookings</a>
+            </div>
+            <div id="upcomingBookingsContainer">
+              <div class="text-center py-4 text-muted small">Loading upcoming bookings...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="ev-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h5 class="fw-bold mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Recently Booked Events</h5>
+              <span class="ev-badge ev-badge-purple"><span id="statCerts">0</span> Certificates</span>
+            </div>
+            <div id="recentBookedEventsContainer">
+              <div class="text-center py-4 text-muted small">Loading booking history...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. My QR Tickets Section -->
+      <div class="ev-card p-4 h-auto mb-4" id="my-tickets">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom">
+          <div>
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-qrcode text-primary me-2"></i>My Smart QR Tickets & Certificates</h5>
+            <p class="text-muted small mb-0">Present your unique QR code at the venue entrance or download your verified PDF certificate</p>
+          </div>
+          <a href="/my-bookings.html" class="btn-ev-outline btn-sm">Open Full Ticket Wallet</a>
+        </div>
+        <div class="row g-3" id="customerTicketsGrid">
+          <div class="col-12 text-center py-4 text-muted small">Loading your QR tickets...</div>
+        </div>
+      </div>
+
+      <!-- 5. Saved Wishlist & 6. Smart Recommended Events -->
+      <div class="ev-card p-4 h-auto mb-4" id="saved-wishlist">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+          <div>
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-heart text-danger me-2"></i>Saved Wishlist</h5>
+            <p class="text-muted small mb-0">Events you have bookmarked for quick reservation</p>
+          </div>
+          <a href="/wishlist.html" class="btn-ev-lavender btn-sm">Manage Wishlist</a>
+        </div>
+        <div class="row g-4" id="dashboardWishlistGrid">
+          <div class="col-12 text-center py-3 text-muted small">Loading saved events...</div>
+        </div>
+      </div>
+
+      <div class="ev-card p-4 h-auto mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+          <div>
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>Recommended For You</h5>
+            <p class="text-muted small mb-0">Personalized event suggestions based on your interests and booking history</p>
+          </div>
+          <a href="/events.html" class="btn-ev-outline btn-sm">Explore All</a>
+        </div>
+        <div class="row g-4" id="dashboardRecommendedGrid">
+          <div class="col-12 text-center py-3 text-muted small">Loading recommendations...</div>
+        </div>
+      </div>
+
+      <!-- 7. Recent Notifications & Earned Certificates -->
+      <div class="row g-4 mb-4" id="recent-notifications">
+        <div class="col-lg-7">
+          <div class="ev-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h5 class="fw-bold mb-0"><i class="fa-regular fa-bell text-primary me-2"></i>Recent Notifications</h5>
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="markDashboardNotifsRead()">Mark all read</button>
+            </div>
+            <div id="dashboardNotificationsList">
+              <div class="text-center py-3 text-muted small">Loading notifications...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="ev-card p-4 h-100">
+            <h5 class="fw-bold mb-3 pb-2 border-bottom"><i class="fa-solid fa-award text-primary me-2"></i>My Participation Certificates</h5>
+            <div id="myCertificatesList">
+              <div class="text-muted small text-center py-3">Loading certificates...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Account Information & Security Settings -->
+      <div class="row g-4" id="account-settings">
+        <div class="col-lg-7">
+          <div class="ev-card p-4 h-100">
+            <h5 class="mb-3 pb-2 border-bottom"><i class="fa-regular fa-id-card text-primary me-2"></i>Account Information & Preferences</h5>
+            <form id="profileUpdateForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Full Name</label>
+                  <input type="text" id="profName" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Phone Number</label>
+                  <input type="tel" id="profPhone" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Preferred City</label>
+                  <select id="profCity" class="form-select">
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Favorite Categories (Comma separated)</label>
+                  <input type="text" id="profInterests" class="form-control" placeholder="Technology & AI, Music & Concerts">
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Short Bio</label>
+                  <textarea id="profBio" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn-ev-primary">Save Profile Changes</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="ev-card p-4 h-100">
+            <h5 class="mb-3 pb-2 border-bottom"><i class="fa-solid fa-key text-primary me-2"></i>Update Password</h5>
+            <form id="passwordChangeForm">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Current Password</label>
+                <input type="password" id="currentPassword" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">New Password (Min 6 chars)</label>
+                <input type="password" id="newPassword" class="form-control" minlength="6" required>
+              </div>
+              <button type="submit" class="btn-ev-outline w-100">Update Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    EventifyApp.requireAuth();
+
+    function scrollToDashSection(sectionId, linkEl) {
+      document.querySelectorAll('#customerSidebarNav .ev-sidebar-link').forEach(l => l.classList.remove('active'));
+      if (linkEl) linkEl.classList.add('active');
+      const target = document.getElementById(sectionId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    async function loadCustomerDashboard() {
+      try {
+        const res = await EventifyApp.api('/users/dashboard');
+        const u = res.user;
+        const s = res.stats;
+
+        // Hydrate Sidebar & Welcome Banner
+        document.getElementById('profAvatarInitial').textContent = u.name.charAt(0).toUpperCase();
+        document.getElementById('profDisplayName').textContent = u.name;
+        document.getElementById('profDisplayEmail').textContent = u.email;
+        document.getElementById('profDisplayRole').textContent = u.role;
+        document.getElementById('welcomeCustomerHeading').textContent = `Welcome back, ${u.name.split(' ')[0]}!`;
+
+        // Hydrate 4 KPI Cards + Certificates Badge
+        document.getElementById('statBookings').textContent = s.totalBookings;
+        document.getElementById('statUpcoming').textContent = s.upcomingEvents;
+        document.getElementById('statCompleted').textContent = s.completedEvents;
+        document.getElementById('statWishlist').textContent = s.savedEvents;
+        document.getElementById('statCerts').textContent = s.certificatesCount;
+
+        // Hydrate Account Form
+        document.getElementById('profName').value = u.name || '';
+        document.getElementById('profPhone').value = u.phone || '';
+        document.getElementById('profCity').value = u.city || 'Mumbai';
+        document.getElementById('profInterests').value = (u.interests || []).join(', ');
+        document.getElementById('profBio').value = u.bio || '';
+
+        // 2. Render Upcoming Bookings
+        const upcomingEl = document.getElementById('upcomingBookingsContainer');
+        const upcoming = res.upcomingBookings || [];
+        if (upcoming.length === 0) {
+          upcomingEl.innerHTML = `
+            <div class="text-center py-4 text-muted small">
+              <i class="fa-regular fa-calendar-Plus fs-3 text-primary mb-2 d-block"></i>
+              No upcoming bookings yet. <a href="/events.html" class="fw-bold">Explore events</a> to reserve your seats!
+            </div>
+          `;
+        } else {
+          upcomingEl.innerHTML = upcoming.slice(0, 4).map(b => {
+            const ev = b.event || {};
+            const seats = (b.selectedSeats || []).map(x => x.seatNumber).join(', ');
+            return `
+              <div class="d-flex align-items-center justify-content-between p-3 rounded-3 border mb-2 bg-light">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="${ev.poster}" class="rounded-2" style="width:60px;height:48px;object-fit:cover;" alt="${ev.title}">
+                  <div>
+                    <a href="/event-details.html?id=${ev._id}" class="fw-bold text-dark small d-block">${ev.title}</a>
+                    <div class="text-muted" style="font-size:0.75rem;">
+                      <i class="fa-regular fa-calendar me-1 text-primary"></i>${EventifyApp.formatDate(ev.date)} • ${ev.startTime || '18:00'} | Seats: <strong class="text-primary">${seats}</strong>
+                    </div>
+                  </div>
+                </div>
+                <a href="${b.ticketId ? `/ticket.html?id=${b.ticketId._id}` : `/my-bookings.html`}" class="btn-ev-primary btn-sm px-3 py-1">
+                  <i class="fa-solid fa-qrcode"></i> QR Pass
+                </a>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 3. Render Recently Booked Events
+        const recentEl = document.getElementById('recentBookedEventsContainer');
+        const recent = res.recentBookings || [];
+        if (recent.length === 0) {
+          recentEl.innerHTML = `<div class="text-center py-4 text-muted small">No recent booking activity.</div>`;
+        } else {
+          recentEl.innerHTML = recent.slice(0, 4).map(b => {
+            const ev = b.event || {};
+            return `
+              <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                <div>
+                  <div class="fw-bold text-dark small">${ev.title || 'Event'}</div>
+                  <div class="text-muted" style="font-size:0.73rem;">Ref: ${b.bookingReference} • ${EventifyApp.formatCurrency(b.totalAmount)}</div>
+                </div>
+                <span class="ev-badge ${b.bookingStatus === 'confirmed' ? 'ev-badge-green' : 'ev-badge-amber'}">
+                  ${b.bookingStatus.toUpperCase()}
+                </span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 4. Render My QR Tickets
+        const ticketsGrid = document.getElementById('customerTicketsGrid');
+        const tickets = res.myTickets || [];
+        if (tickets.length === 0) {
+          ticketsGrid.innerHTML = `<div class="col-12 text-center py-3 text-muted small">No QR tickets generated yet. Book an event to receive your instant QR pass!</div>`;
+        } else {
+          ticketsGrid.innerHTML = tickets.map(t => `
+            <div class="col-md-6 col-xl-4">
+              <div class="p-3 rounded-4 border bg-white shadow-sm h-100 d-flex align-items-center gap-3">
+                <img src="${t.qrCodeDataUrl}" alt="${t.ticketCode}" class="border rounded-3 p-1 bg-white" style="width:82px;height:82px;flex-shrink:0;">
+                <div class="flex-grow-1 overflow-hidden">
+                  <span class="ev-badge ${t.checkInStatus === 'checked_in' ? 'ev-badge-green' : 'ev-badge-purple'} mb-1" style="font-size:0.68rem;">
+                    <i class="fa-solid ${t.checkInStatus === 'checked_in' ? 'fa-user-check' : 'fa-qrcode'}"></i>
+                    ${t.ticketCode}
+                  </span>
+                  <div class="fw-bold text-dark small text-truncate">${t.event ? t.event.title : 'Event'}</div>
+                  <div class="text-muted mb-2" style="font-size:0.74rem;">Seats: <strong>${(t.seats || []).join(', ')}</strong></div>
+                  <div class="d-flex gap-1">
+                    <a href="/ticket.html?id=${t._id}" class="btn btn-sm btn-ev-primary py-1 px-2" style="font-size:0.74rem;">View Pass</a>
+                    ${t.event && t.event.certificateEligible ? `
+                      <button onclick="downloadCert('${t.bookingId}')" class="btn btn-sm btn-ev-lavender py-1 px-2" style="font-size:0.74rem;" title="Download PDF Certificate">
+                        <i class="fa-solid fa-award"></i> PDF
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // 5. Render Wishlist
+        const wishGrid = document.getElementById('dashboardWishlistGrid');
+        const wishlist = res.wishlist || [];
+        const wishIds = wishlist.map(w => w.event._id);
+        if (wishlist.length === 0) {
+          wishGrid.innerHTML = `<div class="col-12 text-center py-3 text-muted small">Your wishlist is empty. Click the heart icon on any event to save it here.</div>`;
+        } else {
+          wishGrid.innerHTML = wishlist.slice(0, 3).map(w => EventifyApp.renderEventCard(w.event, wishIds)).join('');
+        }
+
+        // 6. Render Recommended Events
+        const recGrid = document.getElementById('dashboardRecommendedGrid');
+        const recs = res.recommendedEvents || [];
+        if (recs.length === 0) {
+          recGrid.innerHTML = `<div class="col-12 text-center py-3 text-muted small">No recommendations available right now.</div>`;
+        } else {
+          recGrid.innerHTML = recs.slice(0, 3).map(e => EventifyApp.renderEventCard(e, wishIds)).join('');
+        }
+
+        // 7. Render Recent Notifications
+        const notifList = document.getElementById('dashboardNotificationsList');
+        const notifs = res.notifications || [];
+        if (notifs.length === 0) {
+          notifList.innerHTML = `<div class="text-center py-3 text-muted small">No recent notifications.</div>`;
+        } else {
+          notifList.innerHTML = notifs.slice(0, 5).map(n => `
+            <a href="${n.link || '#'}" class="d-block p-2 rounded-3 border-bottom text-decoration-none ${n.isRead ? '' : 'bg-light'}">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark small">${n.title}</span>
+                <span class="text-muted" style="font-size:0.7rem;">${EventifyApp.formatDate(n.createdAt)}</span>
+              </div>
+              <div class="text-secondary small">${n.message}</div>
+            </a>
+          `).join('');
+        }
+
+        // Render Earned Certificates
+        const certs = res.certificates || [];
+        const certList = document.getElementById('myCertificatesList');
+        if (certs.length === 0) {
+          certList.innerHTML = `<div class="text-muted small text-center py-3">Book a certificate-eligible event to earn verifiable PDF certificates.</div>`;
+        } else {
+          certList.innerHTML = certs.map(c => `
+            <div class="p-2 border rounded-3 mb-2 d-flex justify-content-between align-items-center bg-light">
+              <div>
+                <div class="fw-bold text-dark small">${c.eventTitle}</div>
+                <div class="text-muted" style="font-size:0.72rem;">ID: ${c.certificateNumber}</div>
+              </div>
+              <button onclick="downloadCert('${c.booking}')" class="btn btn-sm btn-ev-primary py-1 px-2" title="Download PDF">
+                <i class="fa-solid fa-file-pdf me-1"></i> PDF
+              </button>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    async function markDashboardNotifsRead() {
+      await EventifyApp.markAllRead();
+      loadCustomerDashboard();
+    }
+
+    async function downloadCert(bookingId) {
+      try {
+        EventifyApp.showToast('Generating your official PDF certificate...', 'info');
+        const blob = await EventifyApp.api(`/certificates/download/${bookingId}`);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `EVENTIFY-Certificate-${bookingId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        EventifyApp.showToast('Certificate PDF downloaded!', 'success');
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    document.getElementById('profileUpdateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const interests = document.getElementById('profInterests').value
+          .split(',')
+          .map(i => i.trim())
+          .filter(Boolean);
+
+        const res = await EventifyApp.api('/users/profile', {
+          method: 'PUT',
+          body: {
+            name: document.getElementById('profName').value,
+            phone: document.getElementById('profPhone').value,
+            city: document.getElementById('profCity').value,
+            bio: document.getElementById('profBio').value,
+            interests
+          }
+        });
+
+        EventifyApp.setSession(EventifyApp.getToken(), res.user);
+        EventifyApp.showToast(res.message, 'success');
+        loadCustomerDashboard();
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('passwordChangeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await EventifyApp.api('/users/password', {
+          method: 'PUT',
+          body: {
+            currentPassword: document.getElementById('currentPassword').value,
+            newPassword: document.getElementById('newPassword').value
+          }
+        });
+        EventifyApp.showToast(res.message, 'success');
+        document.getElementById('passwordChangeForm').reset();
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadCustomerDashboard);
+  </script>
+</body>
+</html>

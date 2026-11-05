@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Seat Selection – EVENTIFY</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="ev-navbar-placeholder"></div>
+
+  <section class="py-4 bg-white border-bottom">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+          <span class="text-primary fw-bold small text-uppercase">Step 1 of 2 • Interactive Venue Map</span>
+          <h3 class="mb-0" id="bookingEventTitle">Select Your Seats</h3>
+          <p class="text-muted small mb-0" id="bookingEventSub"></p>
+        </div>
+        <a href="javascript:history.back()" class="btn-ev-outline btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>
+          Back to Event</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Left: Interactive Seat Map -->
+        <div class="col-lg-8">
+          <div class="ev-card p-4 h-auto">
+            <div class="ev-stage-screen">
+              <i class="fa-solid fa-tv me-2"></i> MAIN STAGE / PRESENTATION SCREEN THIS WAY
+            </div>
+
+            <div class="ev-seat-grid-container" id="seatMapGrid">
+              <div class="py-5 text-center text-muted">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 small">Loading live interactive seat map...</p>
+              </div>
+            </div>
+
+            <!-- Visual Color Legend (Green = Available, Red = Booked, Purple = Selected) -->
+            <div class="ev-seat-legend">
+              <div class="ev-legend-item">
+                <span class="ev-legend-box" style="background:#DCFCE7;border:2px solid #10B981;"></span>
+                <span>Available (Green)</span>
+              </div>
+              <div class="ev-legend-item">
+                <span class="ev-legend-box" style="background:#6C3CE9;border:2px solid #4C1D95;"></span>
+                <span>Selected (Purple)</span>
+              </div>
+              <div class="ev-legend-item">
+                <span class="ev-legend-box" style="background:#FEE2E2;border:2px solid #EF4444;"></span>
+                <span>Booked (Red)</span>
+              </div>
+            </div>
+
+            <div class="mt-3 text-center small text-muted">
+              <i class="fa-solid fa-circle-info text-primary me-1"></i>
+              <strong>Row A:</strong> VIP Tier &nbsp;|&nbsp; <strong>Rows B & C:</strong> Premium Tier &nbsp;|&nbsp;
+              <strong>Rows D+:</strong> Standard Tier
+              &nbsp;•&nbsp; <span id="maxTicketsHint">Max 10 seats per booking</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Booking Summary & Attendee Details -->
+        <div class="col-lg-4">
+          <div class="ev-card p-4 h-auto sticky-top" style="top:90px;">
+            <h5 class="mb-2 pb-2 border-bottom"><i class="fa-solid fa-receipt text-primary me-2"></i>Booking Summary
+            </h5>
+            <div class="alert alert-light border py-2 px-3 small mb-3 text-secondary">
+              <i class="fa-solid fa-clock-rotate-left text-primary me-1"></i>
+              Selected seats are temporarily locked for <strong>10 minutes</strong> during checkout to prevent
+              simultaneous double booking.
+            </div>
+
+            <div class="mb-3">
+              <div class="small text-muted mb-1">Selected Seats (<span id="selectedSeatCount">0</span>):</div>
+              <div id="selectedSeatBadges" class="d-flex flex-wrap gap-1">
+                <span class="text-muted small fst-italic">Click green seats on the map to select</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-3 mb-3" style="background:var(--ev-lavender);">
+              <div class="d-flex justify-content-between small mb-2">
+                <span>Seat Subtotal</span>
+                <span class="fw-semibold" id="summarySubTotal">₹0</span>
+              </div>
+              <div class="d-flex justify-content-between small mb-2">
+                <span>Platform & GST (5%)</span>
+                <span class="fw-semibold" id="summaryTax">₹0</span>
+              </div>
+              <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                <span class="fw-bold text-dark">Total Payable</span>
+                <span class="fs-5 fw-bold text-primary" id="summaryTotal">₹0</span>
+              </div>
+            </div>
+
+            <form id="initiateBookingForm">
+              <h6 class="fw-bold small text-uppercase text-secondary mb-2">Attendee Details</h6>
+              <div class="mb-2">
+                <label class="form-label small mb-1">Full Name (Printed on Ticket & Certificate)</label>
+                <input type="text" id="attendeeName" class="form-control form-control-sm" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small mb-1">Email Address</label>
+                <input type="email" id="attendeeEmail" class="form-control form-control-sm" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small mb-1">Phone Number</label>
+                <input type="tel" id="attendeePhone" class="form-control form-control-sm" placeholder="+91 98765 43210"
+                  required>
+              </div>
+
+              <button type="submit" id="proceedPaymentBtn" class="btn-ev-primary w-100 py-3" disabled>
+                Proceed to Secure Payment <i class="fa-solid fa-lock ms-1"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="ev-footer-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const currentUser = EventifyApp.requireAuth();
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('eventId');
+
+    let eventData = null;
+    let selectedSeats = []; // array of seat objects
+
+    async function initBookingPage() {
+      if (!eventId) {
+        window.location.href = '/events.html';
+        return;
+      }
+
+      if (currentUser) {
+        document.getElementById('attendeeName').value = currentUser.name || '';
+        document.getElementById('attendeeEmail').value = currentUser.email || '';
+        document.getElementById('attendeePhone').value = currentUser.phone || '+91 98765 43210';
+      }
+
+      try {
+        const res = await EventifyApp.api(`/events/${eventId}`);
+        eventData = res.event;
+
+        document.getElementById('bookingEventTitle').textContent = eventData.title;
+        document.getElementById('bookingEventSub').innerHTML = `
+          <i class="fa-regular fa-calendar me-1"></i>${EventifyApp.formatDate(eventData.date)} at ${eventData.startTime} &nbsp;|&nbsp;
+          <i class="fa-solid fa-location-dot me-1"></i>${eventData.venue}, ${eventData.city}
+        `;
+        const maxPerCust = eventData.maxTicketsPerCustomer || 10;
+        const hintEl = document.getElementById('maxTicketsHint');
+        if (hintEl) hintEl.textContent = `Max ${maxPerCust} seats per customer`;
+
+        renderSeatGrid();
+
+        // Listen for real-time seat updates via Socket.IO
+        if (typeof io !== 'undefined') {
+          const socket = window.evSocket || io();
+          socket.emit('join_event_room', eventId);
+          socket.on('seats_updated', (payload) => {
+            if (payload.eventId === eventId) {
+              payload.bookedSeats.forEach(code => {
+                const s = eventData.seatLayout.seats.find(item => item.seatNumber === code);
+                if (s) s.status = 'booked';
+                selectedSeats = selectedSeats.filter(sel => sel.seatNumber !== code);
+              });
+              renderSeatGrid();
+              updatePricingSummary();
+              EventifyApp.showToast('Seat map updated in real-time!', 'info');
+            }
+          });
+        }
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+      }
+    }
+
+    function renderSeatGrid() {
+      const grid = document.getElementById('seatMapGrid');
+      const seats = eventData.seatLayout.seats || [];
+
+      // Group seats by row
+      const rowsMap = {};
+      seats.forEach(s => {
+        if (!rowsMap[s.row]) rowsMap[s.row] = [];
+        rowsMap[s.row].push(s);
+      });
+
+      const now = new Date();
+      grid.innerHTML = Object.keys(rowsMap).map(rowLetter => {
+        const rowSeats = rowsMap[rowLetter];
+        const tierLabel = rowSeats[0] ? rowSeats[0].tier : 'Standard';
+        const tierPrice = rowSeats[0] ? rowSeats[0].price : eventData.ticketPrice;
+
+        return `
+          <div class="ev-seat-row">
+            <span class="ev-row-label" title="${tierLabel} Tier (₹${tierPrice})">${rowLetter}</span>
+            ${rowSeats.map(seat => {
+          const isSelected = selectedSeats.some(s => s.seatNumber === seat.seatNumber);
+          const isLockedByOther =
+            seat.status === 'available' &&
+            seat.lockedBy &&
+            (!currentUser || seat.lockedBy !== currentUser._id) &&
+            seat.lockExpiresAt &&
+            new Date(seat.lockExpiresAt) > now;
+          const isUnavailable = seat.status === 'booked' || isLockedByOther;
+          const stateClass = isUnavailable ? 'booked' : (isSelected ? 'selected' : 'available');
+          const seatTooltip = isLockedByOther
+            ? `Seat ${seat.seatNumber} • Temporarily locked in checkout`
+            : `Seat ${seat.seatNumber} • ${seat.tier} Tier • ₹${seat.price}`;
+          return `
+                <button type="button"
+                  class="ev-seat ${stateClass}"
+                  title="${seatTooltip}"
+                  ${isUnavailable ? 'disabled' : ''}
+                  onclick="toggleSeatSelection('${seat.seatNumber}')">
+                  ${seat.seatNumber}
+                </button>
+              `;
+        }).join('')}
+            <span class="ev-row-label">${rowLetter}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleSeatSelection = function (seatNumber) {
+      const seatObj = eventData.seatLayout.seats.find(s => s.seatNumber === seatNumber);
+      if (!seatObj || seatObj.status === 'booked') return;
+
+      const maxLimit = eventData.maxTicketsPerCustomer || 10;
+      const existingIdx = selectedSeats.findIndex(s => s.seatNumber === seatNumber);
+      if (existingIdx > -1) {
+        selectedSeats.splice(existingIdx, 1);
+      } else {
+        if (selectedSeats.length >= maxLimit) {
+          EventifyApp.showToast(`Maximum ${maxLimit} seats allowed per booking for this event`, 'warning');
+          return;
+        }
+        selectedSeats.push(seatObj);
+      }
+
+      renderSeatGrid();
+      updatePricingSummary();
+    };
+
+    function updatePricingSummary() {
+      const countEl = document.getElementById('selectedSeatCount');
+      const badgesEl = document.getElementById('selectedSeatBadges');
+      const subTotalEl = document.getElementById('summarySubTotal');
+      const taxEl = document.getElementById('summaryTax');
+      const totalEl = document.getElementById('summaryTotal');
+      const submitBtn = document.getElementById('proceedPaymentBtn');
+
+      countEl.textContent = selectedSeats.length;
+
+      if (selectedSeats.length === 0) {
+        badgesEl.innerHTML = `<span class="text-muted small fst-italic">Click green seats on the map to select</span>`;
+        subTotalEl.textContent = '₹0';
+        taxEl.textContent = '₹0';
+        totalEl.textContent = '₹0';
+        submitBtn.disabled = true;
+        return;
+      }
+
+      badgesEl.innerHTML = selectedSeats.map(s => `
+        <span class="ev-badge ev-badge-purple">
+          ${s.seatNumber} (${s.tier} • ₹${s.price})
+        </span>
+      `).join('');
+
+      const subTotal = selectedSeats.reduce((sum, s) => sum + Number(s.price), 0);
+      const tax = Math.round(subTotal * 0.05);
+      const total = subTotal + tax;
+
+      subTotalEl.textContent = EventifyApp.formatCurrency(subTotal);
+      taxEl.textContent = EventifyApp.formatCurrency(tax);
+      totalEl.textContent = EventifyApp.formatCurrency(total);
+      submitBtn.disabled = false;
+    }
+
+    document.getElementById('initiateBookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (selectedSeats.length === 0) return;
+
+      const btn = document.getElementById('proceedPaymentBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Locking Seats...`;
+
+      try {
+        const res = await EventifyApp.api('/bookings/initiate', {
+          method: 'POST',
+          body: {
+            eventId,
+            seatNumbers: selectedSeats.map(s => s.seatNumber),
+            attendeeName: document.getElementById('attendeeName').value,
+            attendeeEmail: document.getElementById('attendeeEmail').value,
+            attendeePhone: document.getElementById('attendeePhone').value
+          }
+        });
+
+        EventifyApp.showToast('Booking initiated! Redirecting to Razorpay checkout...', 'success');
+        setTimeout(() => {
+          window.location.href = `/payment.html?bookingId=${res.booking._id}`;
+        }, 500);
+      } catch (err) {
+        EventifyApp.showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `Proceed to Secure Payment <i class="fa-solid fa-lock ms-1"></i>`;
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', initBookingPage);
+  </script>
+</body>
+
+</html>
