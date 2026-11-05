@@ -110,8 +110,8 @@ app.use('/api/organizer', organizerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Handle 404 for unknown /api routes
-app.use(notFound);
+// Handle unknown API routes
+app.use('/api', notFound);
 
 // Fallback for frontend HTML pages
 app.get('*', (req, res) => {
@@ -120,6 +120,8 @@ app.get('*', (req, res) => {
 
 // Global error handler
 app.use(errorHandler);
+
+
 
 const PORT = process.env.PORT || 5000;
 
