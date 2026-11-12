@@ -13,6 +13,11 @@ const EventifyApp = (() => {
       : 'http://localhost:5000')
   ).replace(/\/$/, '');
 
+  const SOCKET_ORIGIN =
+    typeof window !== 'undefined' && window.location.hostname.endsWith('.netlify.app')
+      ? 'https://eventify-event-management.onrender.com'
+      : BACKEND_ORIGIN;
+
   const API_BASE = `${BACKEND_ORIGIN}/api`;
 
   const getToken = () => localStorage.getItem('ev_token');
@@ -498,7 +503,7 @@ const EventifyApp = (() => {
   const initSocket = (userId) => {
     if (typeof io !== 'undefined') {
       try {
-        const socket = io(BACKEND_ORIGIN);
+        const socket = io(SOCKET_ORIGIN, { transports: ['websocket', 'polling'] });
         socket.emit('join_user_room', userId);
         socket.on('new_notification', (notif) => {
           showToast(`${notif.title}: ${notif.message}`, 'info');

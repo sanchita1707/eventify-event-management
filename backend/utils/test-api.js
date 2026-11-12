@@ -650,10 +650,105 @@ const runTests = async () => {
     const delCatRes = await apiCall(`/api/categories/${createCatRes.data.category._id}`, 'DELETE', null, adminToken);
     assert(delCatRes.status === 200, 'Admin Category Deletion');
 
-    // 24. Verify Deployment & Git Security Configuration Files (.gitignore, .env.example, render.yaml, netlify.toml)
+    // 24. Test Payment Failure Simulation, Seat Lock Release & Card/Netbanking Payment Methods
+    const reapproveRes = await apiCall(
+      `/api/admin/events/${createdEventId}/approval`,
+      'PUT',
+      { approvalStatus: 'approved', isFeatured: true },
+      adminToken
+    );
+    assert(reapproveRes.status === 200, 'Re-approve test event for failed-payment & seat-release test');
+
+    const failBookInit = await apiCall(
+      '/api/bookings/initiate',
+      'POST',
+      {
+        eventId: createdEventId,
+        seatNumbers: ['C3'],
+        attendeeName: 'Test Customer CS',
+        attendeeEmail: uniqueEmail
+      },
+      secondCustomerToken
+    );
+    assert(failBookInit.status === 201, 'Initiate booking on seat C3 for payment failure test');
+    const failBookingId = failBookInit.data.booking._id;
+
+    const failOrderRes = await apiCall(
+      '/api/payments/create-order',
+      'POST',
+      { bookingId: failBookingId },
+      secondCustomerToken
+    );
+    const markFailedRes = await apiCall(
+      '/api/payments/failed',
+      'POST',
+      {
+        bookingId: failBookingId,
+        orderId: failOrderRes.data.order.id,
+        reason: 'Simulated payment failure in QA test'
+      },
+      secondCustomerToken
+    );
+    assert(
+      markFailedRes.status === 200 && markFailedRes.data.booking.bookingStatus === 'cancelled',
+      'Simulated Payment Failure cancels pending booking and releases temporary seat lock on C3'
+    );
+
+    const retryBookC3 = await apiCall(
+      '/api/bookings/initiate',
+      'POST',
+      {
+        eventId: createdEventId,
+        seatNumbers: ['C3'],
+        attendeeName: 'Aarav Sharma',
+        attendeeEmail: 'customer@eventify.com'
+      },
+      customerToken
+    );
+    assert(
+      retryBookC3.status === 201,
+      'Seat C3 is immediately bookable again after simulated payment failure released its lock'
+    );
+
+    const cardOrderRes = await apiCall(
+      '/api/payments/create-order',
+      'POST',
+      { bookingId: retryBookC3.data.booking._id },
+      customerToken
+    );
+    const cardAuthRes = await apiCall(
+      '/api/payments/test-authorize',
+      'POST',
+      { orderId: cardOrderRes.data.order.id, paymentMethod: 'card' },
+      customerToken
+    );
+    assert(
+      cardAuthRes.status === 200 && cardAuthRes.data.razorpay_signature,
+      'Razorpay Test Mode Card & Netbanking Payment Authorization'
+    );
+
+    // 25. Verify Razorpay Popup UI Fix (Modal outside .ev-card, z-index, opacity, close/cancel & radio options)
     const rootDir = path.join(__dirname, '../..');
+    const paymentHtml = fs.readFileSync(path.join(rootDir, 'frontend/payment.html'), 'utf8');
+    const styleCss = fs.readFileSync(path.join(rootDir, 'frontend/css/style.css'), 'utf8');
+    const sectionEndIdx = paymentHtml.indexOf('</section>');
+    const modalIdx = paymentHtml.indexOf('id="razorpayTestModal"');
+    assert(
+      modalIdx > sectionEndIdx &&
+        paymentHtml.includes('id="closeTestModalBtn"') &&
+        paymentHtml.includes('id="cancelTestPayBtn"') &&
+        paymentHtml.includes('data-method="upi"') &&
+        paymentHtml.includes('data-method="card"') &&
+        paymentHtml.includes('data-method="netbanking"') &&
+        styleCss.includes('.ev-rzp-modal-content') &&
+        styleCss.includes('body.modal-open .ev-card:hover'),
+      'Razorpay Popup UI Fix verified (Modal outside .ev-card transform context, opaque white card, z-index 1060+, close/cancel & radio options)'
+    );
+
+    // 26. Verify Deployment & Git Security Configuration Files (.gitignore, .env.example, render.yaml, netlify.toml)
     const gitignoreContent = fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8');
     const envExampleContent = fs.readFileSync(path.join(rootDir, '.env.example'), 'utf8');
+    const netlifyTomlContent = fs.readFileSync(path.join(rootDir, 'netlify.toml'), 'utf8');
     const hasRenderYaml = fs.existsSync(path.join(rootDir, 'render.yaml'));
     const hasNetlifyToml = fs.existsSync(path.join(rootDir, 'netlify.toml'));
     assert(
@@ -661,6 +756,8 @@ const runTests = async () => {
         gitignoreContent.includes('node_modules/') &&
         envExampleContent.includes('MONGO_URI=') &&
         envExampleContent.includes('OPENAI_API_KEY=') &&
+        netlifyTomlContent.includes('https://eventify-event-management.onrender.com/api/:splat') &&
+        netlifyTomlContent.includes('/socket.io/*') &&
         hasRenderYaml &&
         hasNetlifyToml,
       'Deployment & Git Security Configs verified (.gitignore, .env.example, render.yaml, netlify.toml)'
@@ -681,7 +778,7 @@ const runTests = async () => {
     }
 
     console.log('\n============================================================');
-    console.log('  ALL 44 END-TO-END QA, SECURITY & DEPLOYMENT TESTS PASSED!');
+    console.log('  ALL 50 END-TO-END QA, SECURITY & DEPLOYMENT TESTS PASSED!');
     console.log('============================================================\n');
 
     if (startedOwnServer) {

@@ -170,7 +170,10 @@
 
         // Listen for real-time seat updates via Socket.IO
         if (typeof io !== 'undefined') {
-          const socket = window.evSocket || io();
+          const socketUrl = window.location.hostname.endsWith('.netlify.app')
+            ? 'https://eventify-event-management.onrender.com'
+            : window.location.origin;
+          const socket = window.evSocket || io(socketUrl, { transports: ['websocket', 'polling'] });
           socket.emit('join_event_room', eventId);
           socket.on('seats_updated', (payload) => {
             if (payload.eventId === eventId) {

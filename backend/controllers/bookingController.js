@@ -600,39 +600,51 @@ exports.verifyPayment = async (req, res, next) => {
 exports.markPaymentFailed = async (req, res, next) => {
   try {
     const { bookingId, orderId, reason } = req.body;
+    let updatedBooking = null;
+
     if (bookingId) {
-      const booking = await Booking.findByIdAndUpdate(
-        bookingId,
-        {
-          paymentStatus: 'failed',
-          bookingStatus: 'cancelled'
-        },
-        { new: true }
-      );
-      if (booking && booking.event && Array.isArray(booking.selectedSeats)) {
-        const seatCodes = booking.selectedSeats.map((s) => s.seatNumber);
-        const event = await Event.findById(booking.event);
-        if (event && event.seatLayout && Array.isArray(event.seatLayout.seats)) {
-          event.seatLayout.seats.forEach((seatObj) => {
-            if (seatCodes.includes(seatObj.seatNumber) && seatObj.status === 'available') {
-              seatObj.lockedBy = null;
-              seatObj.lockExpiresAt = null;
-            }
+      const existing = await Booking.findById(bookingId);
+      if (existing) {
+        if (existing.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+          return res.status(403).json({
+            success: false,
+            message: 'Not authorized to modify this booking'
           });
-          await event.save();
+        }
+        if (existing.bookingStatus !== 'confirmed') {
+          existing.paymentStatus = 'failed';
+          existing.bookingStatus = 'cancelled';
+          updatedBooking = await existing.save();
+
+          if (existing.event && Array.isArray(existing.selectedSeats)) {
+            const seatCodes = existing.selectedSeats.map((s) => s.seatNumber);
+            const event = await Event.findById(existing.event);
+            if (event && event.seatLayout && Array.isArray(event.seatLayout.seats)) {
+              event.seatLayout.seats.forEach((seatObj) => {
+                if (seatCodes.includes(seatObj.seatNumber) && seatObj.status === 'available') {
+                  seatObj.lockedBy = null;
+                  seatObj.lockExpiresAt = null;
+                }
+              });
+              await event.save();
+            }
+          }
+        } else {
+          updatedBooking = existing;
         }
       }
     }
     if (orderId) {
       await Payment.findOneAndUpdate(
-        { razorpayOrderId: orderId },
+        { razorpayOrderId: orderId, user: req.user._id },
         { status: 'failed', failureReason: reason || 'Payment cancelled or failed by user' }
       );
     }
 
     res.status(200).json({
       success: true,
-      message: 'Payment failure recorded. Temporary seat locks released.'
+      message: 'Payment failure recorded. Temporary seat locks released.',
+      booking: updatedBooking
     });
   } catch (error) {
     next(error);

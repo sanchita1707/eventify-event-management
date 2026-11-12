@@ -32,75 +32,105 @@
                 <div class="spinner-border text-primary"></div>
               </div>
             </div>
-
-            <!-- Razorpay Interactive Test Checkout Modal (when live keys aren't provided or for instant test-mode demo) -->
-            <div class="modal fade" id="razorpayTestModal" tabindex="-1" data-bs-backdrop="static">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg" style="border-radius:20px;overflow:hidden;">
-                  <div class="p-4 text-white d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#2563EB,#6C3CE9);">
-                    <div class="d-flex align-items-center gap-2">
-                      <i class="fa-solid fa-bolt fs-4"></i>
-                      <div>
-                        <h6 class="mb-0 text-white fw-bold">Razorpay Secure Checkout</h6>
-                        <span class="badge bg-warning text-dark" style="font-size:0.68rem;">TEST MODE SANDBOX</span>
-                      </div>
-                    </div>
-                    <div class="text-end">
-                      <div class="small opacity-75">Amount</div>
-                      <div class="fs-5 fw-bold" id="modalPayAmount">₹0</div>
-                    </div>
-                  </div>
-                  <div class="modal-body p-4">
-                    <div class="small text-muted mb-3">
-                      Order ID: <code id="modalOrderId">order_test_...</code>
-                    </div>
-
-                    <label class="form-label small fw-bold">Select Test Payment Method</label>
-                    <div class="d-grid gap-2 mb-4">
-                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
-                        <input type="radio" name="testPayMethod" value="upi" checked class="form-check-input mt-0">
-                        <i class="fa-solid fa-mobile-screen-button text-primary fs-5"></i>
-                        <div>
-                          <div class="fw-bold small text-dark">UPI / QR (GPay, PhonePe, Paytm)</div>
-                          <div class="text-muted" style="font-size:0.75rem;">Instant test verification (success@razorpay)</div>
-                        </div>
-                      </label>
-                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
-                        <input type="radio" name="testPayMethod" value="card" class="form-check-input mt-0">
-                        <i class="fa-regular fa-credit-card text-primary fs-5"></i>
-                        <div>
-                          <div class="fw-bold small text-dark">Credit / Debit Card (Test Card)</div>
-                          <div class="text-muted" style="font-size:0.75rem;">4111 •••• •••• 1111 | CVV 123</div>
-                        </div>
-                      </label>
-                      <label class="p-3 border rounded-3 d-flex align-items-center gap-3" style="cursor:pointer;">
-                        <input type="radio" name="testPayMethod" value="netbanking" class="form-check-input mt-0">
-                        <i class="fa-solid fa-building-columns text-primary fs-5"></i>
-                        <div>
-                          <div class="fw-bold small text-dark">Netbanking (SBI / HDFC / ICICI)</div>
-                          <div class="text-muted" style="font-size:0.75rem;">Razorpay Test Bank Gateway</div>
-                        </div>
-                      </label>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                      <button type="button" id="confirmTestPayBtn" class="btn-ev-primary flex-grow-1 py-2">
-                        <i class="fa-solid fa-circle-check me-1"></i> Authorize Test Payment
-                      </button>
-                      <button type="button" id="failTestPayBtn" class="btn btn-outline-danger py-2">
-                        Simulate Failure
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- Razorpay Interactive Test Checkout Modal (Placed directly in body outside .ev-card to prevent transform/z-index stacking context bugs) -->
+  <div class="modal fade ev-rzp-modal" id="razorpayTestModal" tabindex="-1" aria-labelledby="razorpayTestModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content ev-rzp-modal-content border-0">
+        <!-- Modal Header -->
+        <div class="ev-rzp-modal-header p-4 text-white d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <div class="ev-rzp-brand-badge">
+              <i class="fa-solid fa-bolt fs-5"></i>
+            </div>
+            <div>
+              <h6 class="mb-0 text-white fw-bold" id="razorpayTestModalTitle">Razorpay Secure Checkout</h6>
+              <span class="badge bg-warning text-dark mt-1" style="font-size:0.68rem;letter-spacing:0.4px;">TEST MODE SANDBOX</span>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+              <div class="small text-white opacity-75" style="font-size:0.72rem;">Total Payable</div>
+              <div class="fs-5 fw-bold text-white" id="modalPayAmount">₹0</div>
+            </div>
+            <button type="button" class="btn-close btn-close-white ev-rzp-close-btn" id="closeTestModalBtn" data-bs-dismiss="modal" aria-label="Close payment popup"></button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body p-4 bg-white text-dark">
+          <div class="d-flex justify-content-between align-items-center p-2 px-3 rounded-3 mb-3" style="background:#F8FAFC;border:1px solid #E2E8F0;">
+            <span class="small text-secondary fw-medium"><i class="fa-solid fa-receipt text-primary me-1"></i>Order ID</span>
+            <code class="fw-bold text-dark small" id="modalOrderId">order_test_...</code>
+          </div>
+
+          <label class="form-label small fw-bold text-dark mb-2">Select Test Payment Method</label>
+          <div class="d-grid gap-2 mb-3" id="testPayMethodsGroup">
+            <!-- Option 1: UPI -->
+            <label class="ev-pay-method-option active" data-method="upi">
+              <input type="radio" name="testPayMethod" value="upi" checked class="form-check-input ev-pay-radio mt-0">
+              <div class="ev-pay-method-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold small text-dark">UPI / QR (GPay, PhonePe, Paytm)</div>
+                <div class="text-muted" style="font-size:0.75rem;">Instant test verification • <code>success@razorpay</code></div>
+              </div>
+              <i class="fa-solid fa-circle-check ev-pay-check-icon"></i>
+            </label>
+
+            <!-- Option 2: Card -->
+            <label class="ev-pay-method-option" data-method="card">
+              <input type="radio" name="testPayMethod" value="card" class="form-check-input ev-pay-radio mt-0">
+              <div class="ev-pay-method-icon"><i class="fa-regular fa-credit-card"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold small text-dark">Credit / Debit Card (Test Card)</div>
+                <div class="text-muted" style="font-size:0.75rem;"><code>4111 •••• •••• 1111</code> | Expiry <code>12/28</code> | CVV <code>123</code></div>
+              </div>
+              <i class="fa-solid fa-circle-check ev-pay-check-icon"></i>
+            </label>
+
+            <!-- Option 3: Netbanking -->
+            <label class="ev-pay-method-option" data-method="netbanking">
+              <input type="radio" name="testPayMethod" value="netbanking" class="form-check-input ev-pay-radio mt-0">
+              <div class="ev-pay-method-icon"><i class="fa-solid fa-building-columns"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold small text-dark">Netbanking (SBI / HDFC / ICICI)</div>
+                <div class="text-muted" style="font-size:0.75rem;">Razorpay Test Bank Gateway</div>
+              </div>
+              <i class="fa-solid fa-circle-check ev-pay-check-icon"></i>
+            </label>
+          </div>
+
+          <!-- Dynamic Method Details Box -->
+          <div id="testMethodDetailPanel" class="p-3 rounded-3 mb-4 small" style="background:var(--ev-lavender);border:1px solid var(--ev-lavender-border);">
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="fw-semibold text-dark"><i class="fa-solid fa-shield-check text-primary me-1"></i>Test VPA / Handle:</span>
+              <input type="text" id="testUpiVpaInput" class="form-control form-control-sm w-50 bg-white fw-semibold" value="success@razorpay" aria-label="Test UPI ID">
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-grid gap-2">
+            <button type="button" id="confirmTestPayBtn" class="btn-ev-primary w-100 py-2 fw-bold" style="font-size:0.96rem;">
+              <i class="fa-solid fa-circle-check me-1"></i> Authorize Test Payment
+            </button>
+            <div class="d-flex gap-2">
+              <button type="button" id="failTestPayBtn" class="btn btn-outline-danger flex-grow-1 py-2 small fw-semibold">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> Simulate Failure
+              </button>
+              <button type="button" id="cancelTestPayBtn" class="btn btn-light border flex-grow-1 py-2 small fw-semibold text-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="ev-footer-placeholder"></div>
 
@@ -238,7 +268,8 @@
           // Open Interactive Razorpay Test Sandbox Modal
           document.getElementById('modalPayAmount').textContent = EventifyApp.formatCurrency(currentOrderData.amountRupees);
           document.getElementById('modalOrderId').textContent = currentOrderData.id;
-          rzpModal = new bootstrap.Modal(document.getElementById('razorpayTestModal'));
+          const modalEl = document.getElementById('razorpayTestModal');
+          rzpModal = bootstrap.Modal.getOrCreateInstance(modalEl);
           rzpModal.show();
         }
       } catch (err) {
@@ -247,6 +278,59 @@
         btn.innerHTML = `<i class="fa-solid fa-credit-card me-2"></i> Pay ${EventifyApp.formatCurrency(currentBooking.totalAmount)} with Razorpay`;
       }
     }
+
+    // Interactive Radio Selection & Dynamic Method Details
+    document.querySelectorAll('input[name="testPayMethod"]').forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        const selected = e.target.value;
+        document.querySelectorAll('.ev-pay-method-option').forEach((lbl) => {
+          lbl.classList.toggle('active', lbl.dataset.method === selected);
+        });
+        const detailPanel = document.getElementById('testMethodDetailPanel');
+        if (!detailPanel) return;
+        if (selected === 'upi') {
+          detailPanel.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="fw-semibold text-dark"><i class="fa-solid fa-mobile-screen-button text-primary me-1"></i>Test UPI ID:</span>
+              <input type="text" id="testUpiVpaInput" class="form-control form-control-sm w-50 bg-white fw-semibold" value="success@razorpay" aria-label="Test UPI ID">
+            </div>
+          `;
+        } else if (selected === 'card') {
+          detailPanel.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="fw-semibold text-dark"><i class="fa-regular fa-credit-card text-primary me-1"></i>Test Visa Card:</span>
+              <span class="badge bg-white text-dark border px-2 py-1">4111 •••• •••• 1111 (CVV 123)</span>
+            </div>
+          `;
+        } else if (selected === 'netbanking') {
+          detailPanel.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="fw-semibold text-dark"><i class="fa-solid fa-building-columns text-primary me-1"></i>Select Test Bank:</span>
+              <select class="form-select form-select-sm w-50 bg-white fw-semibold" aria-label="Select Test Bank">
+                <option value="SBI">State Bank of India (Test)</option>
+                <option value="HDFC">HDFC Bank (Test)</option>
+                <option value="ICICI">ICICI Bank (Test)</option>
+                <option value="AXIS">Axis Bank (Test)</option>
+              </select>
+            </div>
+          `;
+        }
+      });
+    });
+
+    // Restore Pay Now button if user closes/cancels modal without completing payment
+    document.getElementById('razorpayTestModal').addEventListener('hidden.bs.modal', () => {
+      const payBtn = document.getElementById('payNowBtn');
+      if (payBtn && currentBooking) {
+        payBtn.disabled = false;
+        payBtn.innerHTML = `<i class="fa-solid fa-credit-card me-2"></i> Pay ${EventifyApp.formatCurrency(currentBooking.totalAmount)} with Razorpay`;
+      }
+      const confirmBtn = document.getElementById('confirmTestPayBtn');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Authorize Test Payment`;
+      }
+    });
 
     // Handle Test Sandbox Payment Authorization
     document.getElementById('confirmTestPayBtn').addEventListener('click', async () => {
