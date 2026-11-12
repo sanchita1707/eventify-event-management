@@ -109,7 +109,7 @@ exports.register = async (req, res, next) => {
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, portalRole } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -138,6 +138,21 @@ exports.login = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+
+    // Enforce backend portal-role authorization if logging in via dedicated Organizer or Admin portal
+    if (portalRole === 'admin' && user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Administrator privileges are required to sign in to the Admin Portal.'
+      });
+    }
+
+    if (portalRole === 'organizer' && user.role !== 'organizer' && user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: An Event Organizer account is required to sign in to the Organizer Studio.'
       });
     }
 

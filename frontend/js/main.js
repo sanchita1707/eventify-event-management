@@ -442,7 +442,8 @@ const EventifyApp = (() => {
             <div class="d-flex flex-wrap justify-content-center gap-4">
               <a href="/contact.html" class="mb-0">Privacy Policy</a>
               <a href="/contact.html" class="mb-0">Terms of Service</a>
-              <a href="/admin/dashboard.html" class="mb-0">Admin Portal</a>
+              <a href="/organizer/login.html" class="mb-0">Organizer Login</a>
+              <a href="/admin/login.html" class="mb-0">Admin Portal</a>
             </div>
           </div>
         </div>
@@ -520,8 +521,15 @@ const EventifyApp = (() => {
   const requireAuth = (allowedRoles = []) => {
     const user = getUser();
     const token = getToken();
+    const currentPath = window.location.pathname;
     if (!user || !token) {
-      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      let loginPage = '/login.html';
+      if (currentPath.startsWith('/admin/') || (allowedRoles.length === 1 && allowedRoles[0] === 'admin')) {
+        loginPage = '/admin/login.html';
+      } else if (currentPath.startsWith('/organizer/') || allowedRoles.includes('organizer')) {
+        loginPage = '/organizer/login.html';
+      }
+      window.location.href = `${loginPage}?redirect=${encodeURIComponent(currentPath + window.location.search)}`;
       return null;
     }
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {

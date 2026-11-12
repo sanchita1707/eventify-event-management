@@ -61,25 +61,7 @@
                       <span class="fw-bold text-primary">EVENTIFY</span>
                     </div>
                     <h3 class="fw-bold mb-1">Welcome Back</h3>
-                    <p class="text-muted small mb-0">Sign in to your Customer, Organizer, or Administrator account</p>
-                  </div>
-
-                  <!-- Quick Role Demo Credentials -->
-                  <div class="p-3 rounded-3 mb-4 border" style="background:var(--ev-lavender);">
-                    <div class="small fw-bold text-primary mb-2">
-                      <i class="fa-solid fa-key me-1"></i> Quick Demo Role Login:
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                      <button type="button" class="btn btn-sm bg-white border fw-semibold flex-grow-1" onclick="fillDemo('customer@eventify.com','Password@123')">
-                        <i class="fa-regular fa-user text-primary me-1"></i>Customer
-                      </button>
-                      <button type="button" class="btn btn-sm bg-white border fw-semibold flex-grow-1" onclick="fillDemo('organizer@eventify.com','Password@123')">
-                        <i class="fa-solid fa-calendar-plus text-success me-1"></i>Organizer
-                      </button>
-                      <button type="button" class="btn btn-sm bg-white border fw-semibold flex-grow-1" onclick="fillDemo('admin@eventify.com','Password@123')">
-                        <i class="fa-solid fa-user-shield text-danger me-1"></i>Admin
-                      </button>
-                    </div>
+                    <p class="text-muted small mb-0">Sign in with your email and password to access your EVENTIFY account</p>
                   </div>
 
                   <div id="loginAlertBox" class="d-none mb-3"></div>
@@ -125,7 +107,12 @@
                   </form>
 
                   <div class="text-center small text-muted pt-3 border-top mt-auto">
-                    Don't have an account yet? <a href="/register.html" class="fw-bold">Create Account</a>
+                    <div class="mb-2">
+                      Don't have an account yet? <a href="/register.html" class="fw-bold">Create Account</a>
+                    </div>
+                    <div>
+                      Are you an Organizer? <a href="/organizer/login.html" class="fw-bold text-primary"><i class="fa-solid fa-bullhorn me-1"></i>Login here</a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -189,13 +176,6 @@
         icon.className = 'fa-regular fa-eye';
       }
     });
-
-    function fillDemo(email, password) {
-      document.getElementById('loginEmail').value = email;
-      document.getElementById('loginPassword').value = password;
-      document.getElementById('loginAlertBox').className = 'd-none';
-      EventifyApp.showToast(`Filled ${email} credentials. Click Sign In!`, 'info');
-    }
 
     function showLoginAlert(message, type = 'danger') {
       const box = document.getElementById('loginAlertBox');

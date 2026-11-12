@@ -62,7 +62,7 @@ const AdminPortal = (() => {
           <i class="fa-solid fa-globe"></i>
           <span>View Public Website</span>
         </a>
-        <button type="button" onclick="EventifyApp.logout()" class="ev-sidebar-link border-0 bg-transparent text-danger text-start w-100">
+        <button type="button" onclick="EventifyApp.logout('/admin/login.html')" class="ev-sidebar-link border-0 bg-transparent text-danger text-start w-100">
           <i class="fa-solid fa-right-from-bracket text-danger"></i>
           <span>Logout</span>
         </button>

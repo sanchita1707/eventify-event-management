@@ -75,6 +75,7 @@ const runTests = async () => {
       'login.html',
       'register.html',
       'contact.html',
+      'organizer/login.html',
       'organizer/dashboard.html',
       'organizer/create-event.html',
       'organizer/manage-events.html',
@@ -82,6 +83,7 @@ const runTests = async () => {
       'organizer/participants.html',
       'organizer/scan-ticket.html',
       'organizer/analytics.html',
+      'admin/login.html',
       'admin/dashboard.html',
       'admin/users.html',
       'admin/organizers.html',
@@ -194,10 +196,49 @@ const runTests = async () => {
 
     const admLogin = await apiCall('/api/auth/login', 'POST', {
       email: 'admin@eventify.com',
-      password: 'Password@123'
+      password: 'Password@123',
+      portalRole: 'admin'
     });
-    assert(admLogin.status === 200 && admLogin.data.user.role === 'admin', 'Admin Login');
+    assert(admLogin.status === 200 && admLogin.data.user.role === 'admin', 'Admin Login via Admin Portal');
     const adminToken = admLogin.data.token;
+
+    // Test Backend Portal-Role Authorization on Login (Customer blocked from Organizer/Admin login portals, Organizer blocked from Admin login portal)
+    const custOnOrgPortal = await apiCall('/api/auth/login', 'POST', {
+      email: 'customer@eventify.com',
+      password: 'Password@123',
+      portalRole: 'organizer'
+    });
+    assert(custOnOrgPortal.status === 403, 'Backend blocks Customer credentials on Organizer Login Portal (HTTP 403)');
+
+    const custOnAdminPortal = await apiCall('/api/auth/login', 'POST', {
+      email: 'customer@eventify.com',
+      password: 'Password@123',
+      portalRole: 'admin'
+    });
+    assert(custOnAdminPortal.status === 403, 'Backend blocks Customer credentials on Admin Login Portal (HTTP 403)');
+
+    const orgOnAdminPortal = await apiCall('/api/auth/login', 'POST', {
+      email: 'organizer@eventify.com',
+      password: 'Password@123',
+      portalRole: 'admin'
+    });
+    assert(orgOnAdminPortal.status === 403, 'Backend blocks Organizer credentials on Admin Login Portal (HTTP 403)');
+
+    // Verify all 3 login HTML pages have NO demo credentials/autofill and include Organizer portal link
+    const publicLoginHtml = fs.readFileSync(path.join(__dirname, '../../frontend/login.html'), 'utf8');
+    const orgLoginHtml = fs.readFileSync(path.join(__dirname, '../../frontend/organizer/login.html'), 'utf8');
+    const adminLoginHtml = fs.readFileSync(path.join(__dirname, '../../frontend/admin/login.html'), 'utf8');
+    assert(
+      !publicLoginHtml.includes('fillDemo') &&
+        !publicLoginHtml.includes('Password@123') &&
+        !orgLoginHtml.includes('fillDemo') &&
+        !orgLoginHtml.includes('Password@123') &&
+        !adminLoginHtml.includes('fillDemo') &&
+        !adminLoginHtml.includes('Password@123') &&
+        publicLoginHtml.includes('Are you an Organizer?') &&
+        publicLoginHtml.includes('/organizer/login.html'),
+      'All 3 login portals (/login.html, /organizer/login.html, /admin/login.html) have zero public demo credentials and clean Organizer link'
+    );
 
     // 5. Test Role-Based Access Control (RBAC) & Token Expiration/Invalid Token
     const invalidTokenTry = await apiCall('/api/users/dashboard', 'GET', null, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature');

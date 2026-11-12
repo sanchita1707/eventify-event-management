@@ -53,7 +53,7 @@ const OrganizerPortal = (() => {
           <i class="fa-solid fa-globe"></i>
           <span>Explore Public Events</span>
         </a>
-        <button type="button" onclick="EventifyApp.logout()" class="ev-sidebar-link border-0 bg-transparent text-danger text-start w-100">
+        <button type="button" onclick="EventifyApp.logout('/organizer/login.html')" class="ev-sidebar-link border-0 bg-transparent text-danger text-start w-100">
           <i class="fa-solid fa-right-from-bracket text-danger"></i>
           <span>Logout</span>
         </button>
